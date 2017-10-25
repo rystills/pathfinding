@@ -35,7 +35,7 @@ function render() {
 	
 	//draw objects centered in order
 	for (var i = 0; i < objects.length; ++i) {
-		drawCentered(objects[i].imageName,objects[i].canvas.getContext("2d"), objects[i].x, objects[i].y,objects[i].dir);
+		drawCentered(objects[i].image,objects[i].canvas.getContext("2d"), objects[i].x, objects[i].y,objects[i].dir);
 	}
 }
 
@@ -53,7 +53,7 @@ function initCanvas() {
  */
 function loadAssets() {
 	//setup a global, ordered list of asset files to load
-	requiredFiles = ["util.js","setupKeyListeners.js"]
+	requiredFiles = ["util.js","setupKeyListeners.js","images\\DebugSprite.png","DebugSprite.js"];
 	
 	//manually load the asset loader
 	var script = document.createElement('script');
@@ -78,6 +78,7 @@ function initGlobals() {
 		
 	//create global game objects
 	objects = [];
+	objects.push(new DebugSprite(200,200,"images\\DebugSprite.png",cnv,0));
 }
 
 //initialize a reference to the canvas first, then begin loading the game
