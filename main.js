@@ -53,12 +53,17 @@ function initCanvas() {
  */
 function loadAssets() {
 	//setup a global, ordered list of asset files to load
-	requiredFiles = ["util.js","setupKeyListeners.js","images\\DebugSprite.png","DebugSprite.js"];
+	requiredFiles = [
+		"src\\util.js","src\\setupKeyListeners.js", //misc functions
+		"images\\DebugSprite.png", //images
+		"src\\classes\\DebugSprite.js", //classes
+		"maps\\arena2.js", "maps\\hrt201n.js" //maps
+		];
 	
 	//manually load the asset loader
 	var script = document.createElement('script');
 	script.type = 'text/javascript';
-	script.src = "loadAssets.js";
+	script.src = "src\\loadAssets.js";
 	script.onload = loadAssets;
 	//begin loading the asset loader by appending it to the document head
     document.getElementsByTagName('head')[0].appendChild(script);
