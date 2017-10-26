@@ -47,11 +47,21 @@ function render() {
  */
 function drawMap() {
 	var map = scripts[activeMap.name].map;
-	for (var i = 0; i < map.length; ++i) {
-		for (var r = 0; r < map[i].length; ++r) {
-			ctx.drawImage(images["tree"],i*tileSize,r*tileSize);
+	//first sweep: draw grid contents
+	for (var i = 0; i < map.length && i*tileSize < cnv.width; ++i) {
+		for (var r = 0; r < map[i].length && r*tileSize < cnv.height; ++r) {
+			ctx.drawImage(images[imageKey[map[i][r]]],i*tileSize,r*tileSize);
 		}
 	}
+	//second sweep: draw grid lines
+	ctx.strokeStyle = "#000000";
+	ctx.lineWidth="2";
+	for (var i = 0; i < map.length && i*tileSize < cnv.width; ++i) {
+		for (var r = 0; r < map[i].length && r*tileSize < cnv.height; ++r) {
+			ctx.rect(i*tileSize,r*tileSize,tileSize,tileSize);
+		}
+	}
+	ctx.stroke();
 }
 
 
@@ -72,7 +82,7 @@ function loadAssets() {
 	requiredFiles = [
 		"src\\util.js","src\\setupKeyListeners.js", //misc functions
 		"ext\\enums\\enums.js", //external dependencies
-		"images\\DebugSprite.png", "images\\tree.png", "images\\floor.png", //images
+		"images\\DebugSprite.png", "images\\tree.png", "images\\floor.png", "images\\void.png", //images
 		"src\\classes\\DebugSprite.js", //classes
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
@@ -98,9 +108,10 @@ function initGlobals() {
 	deltaTime = 0;
 	totalTime = 0;
 	
-	//global map enum
+	//store map enum as well as a key of map contents to image names
 	maps = new enums.Enum("arena2", "hrt201n");
 	activeMap = maps.arena2;
+	imageKey = {'T':"tree",'.':"floor",'@':"void"}
 	
 	//global game settings
 	tileSize = 32;
