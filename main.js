@@ -16,6 +16,9 @@ function update() {
 	//update camera scrolling
 	updateScroll();
 	
+	//check if the user triggered a map change
+	checkChangeMap();
+	
 	//update objects
 	for (var i = 0; i < objects.length; ++i) {
 		objects[i].update();
@@ -27,6 +30,22 @@ function update() {
 	//toggle off any one-frame event indicators at the end of the update tick
 	mousePressedLeft = false;
 	mousePressedRight = false;
+}
+
+/**
+ * check if the user is attempting to switch maps
+ */
+function checkChangeMap() {
+	if (keyStates["R"]) {
+		//keep track of 'RHeld' to ensure that each R press only changes the map once
+		if (!RHeld) {
+			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+			RHeld = true;
+		}
+	}
+	else {
+		RHeld = false;
+	}
 }
 
 /**
@@ -72,27 +91,48 @@ function render() {
  * check if a tile with topleft coordinates x,y is at all visible on the screen
  * @param x: the leftmost coordinate of the desired tile
  * @param x: the topmost coordinate of the desired tile
+ * @param numTiles: how many tiles worth of distance should we consider. Defaults to 1.
  * @returns whether a tile with the input topleft coordinates is at least partially visible (true) or not (false)
  */
-function tileVisible(x,y) {
-	return x*tileSize-scrollX < cnv.width && x*tileSize-scrollX > -tileSize && 
-	y*tileSize-scrollY < cnv.height && y*tileSize-scrollY > -tileSize;
+function tileVisible(x,y, numTiles) {
+	if (numTiles == null) {
+		numTiles = 1;
+	}
+	var extents = numTiles * tileSize;
+	return x*tileSize-scrollX < cnv.width && x*tileSize-scrollX > -extents && 
+	y*tileSize-scrollY < cnv.height && y*tileSize-scrollY > -extents;
 }
 
 
 /**
  * draw the currently active map to the screen
  */
-function drawMap() {	
+function drawMap() {
 	var map = scripts[activeMap.name].map;
-	//first sweep: draw grid contents
+	//first pass: draw tiles
 	for (var i = 0; i < map.length; ++i) {
 		for (var r = 0; r < map[i].length; ++r) {
+			//render all map tiles that are at least partially visible
 			if (tileVisible(r, i)) {
 				ctx.drawImage(images[imageKey[map[i][r]]],r*tileSize-scrollX,i*tileSize-scrollY);	
 			}
 		}
-	}}
+	}
+	
+	//second pass: draw containers
+	ctx.beginPath();
+	ctx.strokeStyle = "rgba(255,255,255,.5)";
+	ctx.lineWidth="2";
+	for (var i = 0; i < map.length; i += containerSize) {
+		for (var r = 0; r < map[i].length; r += containerSize) {
+			if (tileVisible(r,i,containerSize)) {
+				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+			}
+		}
+	}
+	ctx.stroke();
+	ctx.closePath();
+}
 
 
 /**
@@ -133,6 +173,9 @@ function initGlobals() {
 	//keep a global fps flag for game-speed (although all speeds should use deltaTime)
 	fps = 60;
 	
+	//global keyHeld bools for single-press keys
+	RHeld = false;
+	
 	//init global time vars for delta time calculation
 	prevTime = Date.now();
 	deltaTime = 0;
@@ -144,7 +187,11 @@ function initGlobals() {
 	imageKey = {'T':"tree",'.':"floor",'@':"void"}
 	
 	//global game settings
+	//tile size describes the size of a single tile (in pixels)
 	tileSize = 16;
+	//container size describes how many rows and columns of tiles fit into each container
+	containerSize = 2;
+	//scroll values dictate the current camera scroll (in pixels)
 	scrollX = 0;
 	scrollY = 0;
 		
