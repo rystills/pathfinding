@@ -1,0 +1,2 @@
+# don't store xcf files upstream
+*.xcf

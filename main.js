@@ -33,11 +33,27 @@ function render() {
 	//clear all canvases for a fresh render
 	clearScreen();
 	
+	//draw the map tiles first
+	drawMap();
+	
 	//draw objects centered in order
 	for (var i = 0; i < objects.length; ++i) {
 		drawCentered(objects[i].image,objects[i].canvas.getContext("2d"), objects[i].x, objects[i].y,objects[i].dir);
 	}
 }
+
+/**
+ * draw the currently active map to the screen
+ */
+function drawMap() {
+	var map = scripts[activeMap.name].map;
+	for (var i = 0; i < map.length; ++i) {
+		for (var r = 0; r < map[i].length; ++r) {
+			ctx.drawImage(images["tree"],i*tileSize,r*tileSize);
+		}
+	}
+}
+
 
 /**
  * initialize a reference to our canvas and context
@@ -55,7 +71,8 @@ function loadAssets() {
 	//setup a global, ordered list of asset files to load
 	requiredFiles = [
 		"src\\util.js","src\\setupKeyListeners.js", //misc functions
-		"images\\DebugSprite.png", //images
+		"ext\\enums\\enums.js", //external dependencies
+		"images\\DebugSprite.png", "images\\tree.png", "images\\floor.png", //images
 		"src\\classes\\DebugSprite.js", //classes
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
@@ -80,10 +97,16 @@ function initGlobals() {
 	prevTime = Date.now();
 	deltaTime = 0;
 	totalTime = 0;
+	
+	//global map enum
+	maps = new enums.Enum("arena2", "hrt201n");
+	activeMap = maps.arena2;
+	
+	//global game settings
+	tileSize = 32;
 		
-	//create global game objects
+	//global game objects
 	objects = [];
-	objects.push(new DebugSprite(200,200,"images\\DebugSprite.png",cnv,0));
 }
 
 //initialize a reference to the canvas first, then begin loading the game

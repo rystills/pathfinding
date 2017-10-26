@@ -16,12 +16,22 @@ function loadAssets() {
 }
 
 /**
+ * parse a resource path for the file name, removing the directory structure and extension
+ * @param path: the entire path to strip
+ * @returns
+ */
+function parsePath(path) {
+	var stripped = path.split("\\");
+	return stripped[stripped.length-1].split('.')[0];
+}
+
+/**
  * load a single asset, setting onload to move on to the next asset
  */
 function loadAsset() {
 	//if the global object var contains a string, append it to the global scripts list
 	if (object != null) {
-		scripts[requiredFiles[assetNum-1]] = object;
+		scripts[parsePath(requiredFiles[assetNum-1])] = object;
 		object = null;
 	}
 	//once we've loaded all the objects, we are ready to start the game
@@ -45,7 +55,7 @@ function loadAsset() {
 	}
 	//add the new element to the image dict if its an image
 	else if (elemType == "IMG") {
-		images[requiredFiles[assetNum]] = elem;
+		images[parsePath(requiredFiles[assetNum])] = elem;
 	}
 	
 	++assetNum;
