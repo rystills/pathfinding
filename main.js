@@ -83,9 +83,7 @@ function tileVisible(x,y) {
 /**
  * draw the currently active map to the screen
  */
-function drawMap() {
-	var tilesDrawn = 0;
-	
+function drawMap() {	
 	var map = scripts[activeMap.name].map;
 	//first sweep: draw grid contents
 	for (var i = 0; i < map.length; ++i) {
@@ -94,23 +92,7 @@ function drawMap() {
 				ctx.drawImage(images[imageKey[map[i][r]]],r*tileSize-scrollX,i*tileSize-scrollY);	
 			}
 		}
-	}
-	//second sweep: draw grid lines
-	ctx.strokeStyle = "#000000";
-	ctx.lineWidth="2";
-	ctx.beginPath();
-	for (var i = 0; i < map.length; ++i) {
-		for (var r = 0; r < map[i].length; ++r) {
-			if (tileVisible(r, i)) {
-				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize,tileSize);
-				++tilesDrawn;
-			}
-		}
-	}
-	ctx.stroke();
-	ctx.closePath();
-	console.log(tilesDrawn);
-}
+	}}
 
 
 /**
