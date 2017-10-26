@@ -2,7 +2,7 @@
  * clear the canvas to a predetermined fillcolor, preparing it for a fresh render
  */
 function clearScreen() {
-	ctx.fillStyle="rgb(40,120,255)";
+	ctx.fillStyle="rgb(22,19,58)";
 	ctx.fillRect(0,0,cnv.width,cnv.height);
 }
 
@@ -12,6 +12,9 @@ function clearScreen() {
 function update() {
 	//update the deltaTime
 	updateTime();
+	
+	//update camera scrolling
+	updateScroll();
 	
 	//update objects
 	for (var i = 0; i < objects.length; ++i) {
@@ -24,6 +27,29 @@ function update() {
 	//toggle off any one-frame event indicators at the end of the update tick
 	mousePressedLeft = false;
 	mousePressedRight = false;
+}
+
+/**
+ * update the camera scroll based on user input
+ */
+function updateScroll() {
+	//vertical scrolling
+	if (keyStates["W"]) {
+		scrollY -= tileSize;
+	}
+	else if (keyStates["S"]) {
+		scrollY += tileSize;
+	}
+	
+	//horizontal scrolling
+	if (keyStates["A"]) {
+		scrollX -= tileSize;
+	}
+	else if (keyStates["D"]) {
+		scrollX += tileSize;
+	}
+	//console.log(scrollY);
+
 }
 
 /**
@@ -43,25 +69,47 @@ function render() {
 }
 
 /**
+ * check if a tile with topleft coordinates x,y is at all visible on the screen
+ * @param x: the leftmost coordinate of the desired tile
+ * @param x: the topmost coordinate of the desired tile
+ * @returns whether a tile with the input topleft coordinates is at least partially visible (true) or not (false)
+ */
+function tileVisible(x,y) {
+	return x*tileSize-scrollX < cnv.width && x*tileSize-scrollX > -tileSize && 
+	y*tileSize-scrollY < cnv.height && y*tileSize-scrollY > -tileSize;
+}
+
+
+/**
  * draw the currently active map to the screen
  */
 function drawMap() {
+	var tilesDrawn = 0;
+	
 	var map = scripts[activeMap.name].map;
 	//first sweep: draw grid contents
-	for (var i = 0; i < map.length && i*tileSize < cnv.width; ++i) {
-		for (var r = 0; r < map[i].length && r*tileSize < cnv.height; ++r) {
-			ctx.drawImage(images[imageKey[map[i][r]]],i*tileSize,r*tileSize);
+	for (var i = 0; i < map.length; ++i) {
+		for (var r = 0; r < map[i].length; ++r) {
+			if (tileVisible(r, i)) {
+				ctx.drawImage(images[imageKey[map[i][r]]],r*tileSize-scrollX,i*tileSize-scrollY);	
+			}
 		}
 	}
 	//second sweep: draw grid lines
 	ctx.strokeStyle = "#000000";
 	ctx.lineWidth="2";
-	for (var i = 0; i < map.length && i*tileSize < cnv.width; ++i) {
-		for (var r = 0; r < map[i].length && r*tileSize < cnv.height; ++r) {
-			ctx.rect(i*tileSize,r*tileSize,tileSize,tileSize);
+	ctx.beginPath();
+	for (var i = 0; i < map.length; ++i) {
+		for (var r = 0; r < map[i].length; ++r) {
+			if (tileVisible(r, i)) {
+				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize,tileSize);
+				++tilesDrawn;
+			}
 		}
 	}
 	ctx.stroke();
+	ctx.closePath();
+	console.log(tilesDrawn);
 }
 
 
@@ -110,11 +158,13 @@ function initGlobals() {
 	
 	//store map enum as well as a key of map contents to image names
 	maps = new enums.Enum("arena2", "hrt201n");
-	activeMap = maps.arena2;
+	activeMap = maps.hrt201n;
 	imageKey = {'T':"tree",'.':"floor",'@':"void"}
 	
 	//global game settings
-	tileSize = 32;
+	tileSize = 16;
+	scrollX = 0;
+	scrollY = 0;
 		
 	//global game objects
 	objects = [];
