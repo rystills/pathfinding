@@ -16,7 +16,7 @@ function setupKeyListeners() {
 	mousePressedLeft = false;
 	mouseDownRight = false;
 	mousePressedRight = false;
-	cnv.mousePos = {x:0,y:0};
+	cnv.mousePos = {x:-99999,y:-99999};
 	
 	document.body.addEventListener("mousemove", function (e) {
 		//store the relative mouse position for our canvas

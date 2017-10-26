@@ -88,19 +88,36 @@ function render() {
 }
 
 /**
- * check if a tile with topleft coordinates x,y is at all visible on the screen
- * @param x: the leftmost coordinate of the desired tile
- * @param x: the topmost coordinate of the desired tile
+ * check if a group of numTiles with topleft coordinates x,y is at all visible on the screen
+ * @param x: the leftmost coordinate of the desired tile group
+ * @param x: the topmost coordinate of the desired tile group
  * @param numTiles: how many tiles worth of distance should we consider. Defaults to 1.
  * @returns whether a tile with the input topleft coordinates is at least partially visible (true) or not (false)
  */
-function tileVisible(x,y, numTiles) {
+function tileVisible(x,y,numTiles) {
 	if (numTiles == null) {
 		numTiles = 1;
 	}
 	var extents = numTiles * tileSize;
 	return x*tileSize-scrollX < cnv.width && x*tileSize-scrollX > -extents && 
 	y*tileSize-scrollY < cnv.height && y*tileSize-scrollY > -extents;
+}
+
+/**
+ * get the distance of a group of numTiles with topleft coordinates x,y from the mouse pointer
+ * @param x: the leftmost coordinate of the desired tile group
+ * @param x: the topmost coordinate of the desired tile group
+ * @param numTiles: how many tiles worth of distance should we consider. Defaults to 1.
+ * @returns the distance (in pixels) of the tile group from the mouse pointer
+ */
+function tileMouseDistance(x,y,numTiles) {
+	if (numTiles == null) {
+		numTiles = 1;
+	}
+	var extents = numTiles * tileSize;
+	var centerX = x*tileSize-scrollX + extents/2;
+	var centerY = y*tileSize-scrollY + extents/2;
+	return getDistance(centerX,centerY,cnv.mousePos.x,cnv.mousePos.y);
 }
 
 
@@ -125,7 +142,7 @@ function drawMap() {
 	ctx.lineWidth="2";
 	for (var i = 0; i < map.length; i += containerSize) {
 		for (var r = 0; r < map[i].length; r += containerSize) {
-			if (tileVisible(r,i,containerSize)) {
+			if (tileVisible(r,i,containerSize) && tileMouseDistance(r,i,containerSize) <= 10*tileSize) {
 				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 			}
 		}
