@@ -169,7 +169,7 @@ function loadAssets() {
 	requiredFiles = [
 		"src\\util.js","src\\setupKeyListeners.js", //misc functions
 		"ext\\enums\\enums.js", //external dependencies
-		"images\\DebugSprite.png", "images\\tree.png", "images\\floor.png", "images\\void.png", //images
+		"images\\debugSprite.png", "images\\tree.png", "images\\floor.png", "images\\void.png", //images
 		"src\\classes\\DebugSprite.js", //classes
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
