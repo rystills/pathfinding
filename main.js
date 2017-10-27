@@ -39,6 +39,7 @@ function update() {
  * check if the user is attempting to change zoon levels
  */
 function checkChangeZoom() {
+	var prevTileSize = tileSize;
 	if (keyStates['1']) {
 		tileSize = 16;
 	}
@@ -47,6 +48,26 @@ function checkChangeZoom() {
 	}
 	else if (keyStates['3']) {
 		tileSize = 4;
+	}
+	//only re-render the map if the tile size was updated
+	if (tileSize != prevTileSize) {
+		renderMap();
+	}
+}
+
+/**
+ * render the entire map to a canvas at the desired zoom level
+ */
+function renderMap() {
+	mapCnv.width = scripts[activeMap.name].map[0].length*tileSize;
+	mapCnv.height = scripts[activeMap.name].map.length*tileSize;
+	
+	var map = scripts[activeMap.name].map;
+	//first pass: draw tiles
+	for (var i = 0; i < map.length; ++i) {
+		for (var r = 0; r < map[i].length; ++r) {
+			mapCtx.drawImage(images[imageKey[map[i][r]] + (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],r*tileSize,i*tileSize);	
+		}
 	}
 }
 
@@ -71,6 +92,7 @@ function checkChangeMap() {
 		if (!EHeld) {
 			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
 			EHeld = true;
+			renderMap();
 		}
 	}
 	else {
@@ -82,7 +104,7 @@ function checkChangeMap() {
  * update the camera scroll based on user input
  */
 function updateScroll() {
-	var scrollSpeed = (tileSize == 16 ? 1 : (tileSize == 8 ? 2 : 4));
+	var scrollSpeed = 16/tileSize;
 	//vertical scrolling
 	if (keyStates["W"]) {
 		scrollY -= tileSize*scrollSpeed;
@@ -191,18 +213,11 @@ function drawHUD() {
  * draw the currently active map to the screen
  */
 function drawMap() {
-	var map = scripts[activeMap.name].map;
-	//first pass: draw tiles
-	for (var i = 0; i < map.length; ++i) {
-		for (var r = 0; r < map[i].length; ++r) {
-			//render all map tiles that are at least partially visible
-			if (tileVisible(r, i)) {
-				ctx.drawImage(images[imageKey[map[i][r]] + (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],r*tileSize-scrollX,i*tileSize-scrollY);	
-			}
-		}
-	}
-	
+	//first draw the map itself (rendered to a canvas only when updated)
+	ctx.drawImage(mapCnv, -scrollX, -scrollY);
+
 	//second pass: draw tile containers
+	var map = scripts[activeMap.name].map;
 	var hoveringContainer = null;
 	ctx.beginPath();
 	ctx.lineWidth="2";
@@ -249,11 +264,9 @@ function loadAssets() {
 	requiredFiles = [
 		"src\\util.js","src\\setupKeyListeners.js", //misc functions
 		"ext\\enums\\enums.js", //external dependencies
-		"images\\debugSprite.png", //misc images
 		"images\\tree.png", "images\\floor.png", "images\\void.png", //normal tile images
 		"images\\tree small.png", "images\\floor small.png", "images\\void small.png", //small tile images
 		"images\\tree tiny.png", "images\\floor tiny.png", "images\\void tiny.png", //tiny tile images
-		"src\\classes\\DebugSprite.js", //classes
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
 	
@@ -284,6 +297,10 @@ function initGlobals() {
 	
 	//store map enum as well as a key of map contents to image names
 	maps = new enums.Enum("arena2", "hrt201n");
+	//keep a pre-rendered version of the map on a separate canvas for performance reasons
+	mapCnv = document.createElement('canvas');
+	mapCtx = mapCnv.getContext("2d");
+	
 	activeMap = maps.hrt201n;
 	imageKey = {'T':"tree",'.':"floor",'@':"void"}
 	
@@ -302,6 +319,9 @@ function initGlobals() {
 		
 	//global game objects
 	objects = [];
+	
+	//render the map once at game start
+	renderMap();
 }
 
 //initialize a reference to the canvas first, then begin loading the game
