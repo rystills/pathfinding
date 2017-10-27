@@ -19,6 +19,9 @@ function update() {
 	//check if the user triggered a map change
 	checkChangeMap();
 	
+	//check if the user triggered a zoom change
+	checkChangeZoom();
+	
 	//update objects
 	for (var i = 0; i < objects.length; ++i) {
 		objects[i].update();
@@ -33,18 +36,45 @@ function update() {
 }
 
 /**
+ * check if the user is attempting to change zoon levels
+ */
+function checkChangeZoom() {
+	if (keyStates['1']) {
+		tileSize = 16;
+	}
+	else if (keyStates['2']) {
+		tileSize = 8;
+	}
+	else if (keyStates['3']) {
+		tileSize = 4;
+	}
+}
+
+/**
  * check if the user is attempting to switch maps
  */
 function checkChangeMap() {
 	if (keyStates["R"]) {
-		//keep track of 'RHeld' to ensure that each R press only changes the map once
+		//keep track of 'RHeld' to ensure that each R press only changes the mode once
 		if (!RHeld) {
-			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+			activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
 			RHeld = true;
 		}
 	}
 	else {
 		RHeld = false;
+	}
+	
+	
+	if (keyStates["E"]) {
+		//keep track of 'EHeld' to ensure that each E press only changes the map once
+		if (!EHeld) {
+			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+			EHeld = true;
+		}
+	}
+	else {
+		EHeld = false;
 	}
 }
 
@@ -52,20 +82,21 @@ function checkChangeMap() {
  * update the camera scroll based on user input
  */
 function updateScroll() {
+	var scrollSpeed = (tileSize == 16 ? 1 : (tileSize == 8 ? 2 : 4));
 	//vertical scrolling
 	if (keyStates["W"]) {
-		scrollY -= tileSize;
+		scrollY -= tileSize*scrollSpeed;
 	}
 	else if (keyStates["S"]) {
-		scrollY += tileSize;
+		scrollY += tileSize*scrollSpeed;
 	}
 	
 	//horizontal scrolling
 	if (keyStates["A"]) {
-		scrollX -= tileSize;
+		scrollX -= tileSize*scrollSpeed;
 	}
 	else if (keyStates["D"]) {
-		scrollX += tileSize;
+		scrollX += tileSize*scrollSpeed;
 	}
 	
 	//keep scroll values in-bounds, such that at least 1 tile is visible at all times
@@ -153,6 +184,7 @@ function drawHUD() {
 	ctx.fillText("Map: " + activeMap.name,10,32);
 	ctx.fillText("Scroll: " + scrollX + ", " + scrollY, 175,32);
 	ctx.fillText("Mode: " + activeMode.name, 400, 32);
+	ctx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 600,32);
 }
 
 /**
@@ -165,7 +197,7 @@ function drawMap() {
 		for (var r = 0; r < map[i].length; ++r) {
 			//render all map tiles that are at least partially visible
 			if (tileVisible(r, i)) {
-				ctx.drawImage(images[imageKey[map[i][r]]],r*tileSize-scrollX,i*tileSize-scrollY);	
+				ctx.drawImage(images[imageKey[map[i][r]] + (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],r*tileSize-scrollX,i*tileSize-scrollY);	
 			}
 		}
 	}
@@ -217,7 +249,10 @@ function loadAssets() {
 	requiredFiles = [
 		"src\\util.js","src\\setupKeyListeners.js", //misc functions
 		"ext\\enums\\enums.js", //external dependencies
-		"images\\debugSprite.png", "images\\tree.png", "images\\floor.png", "images\\void.png", //images
+		"images\\debugSprite.png", //misc images
+		"images\\tree.png", "images\\floor.png", "images\\void.png", //normal tile images
+		"images\\tree small.png", "images\\floor small.png", "images\\void small.png", //small tile images
+		"images\\tree tiny.png", "images\\floor tiny.png", "images\\void tiny.png", //tiny tile images
 		"src\\classes\\DebugSprite.js", //classes
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
@@ -240,6 +275,7 @@ function initGlobals() {
 	
 	//global keyHeld bools for single-press keys
 	RHeld = false;
+	EHeld = false;
 	
 	//init global time vars for delta time calculation
 	prevTime = Date.now();
