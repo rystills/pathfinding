@@ -120,6 +120,19 @@ function tileMouseDistance(x,y,numTiles) {
 	return getDistance(centerX,centerY,cnv.mousePos.x,cnv.mousePos.y);
 }
 
+/**
+ * check whether or not the mouse is hovering over the current tile container
+ * @param x: the leftmost coordinate of the desired tile group
+ * @param x: the topmost coordinate of the desired tile group
+ * @returns whether the container at topleft position x,y currently contains the mouse pointer (true) or not (false)
+ */
+function checkContainerHovering(x,y) {
+	var extents = containerSize * tileSize;
+	var centerX = x*tileSize-scrollX + extents/2;
+	var centerY = y*tileSize-scrollY + extents/2;
+	return pointInRect(cnv.mousePos.x, cnv.mousePos.y, {x:centerX, y:centerY, width:extents, height:extents});
+}
+
 
 /**
  * draw the currently active map to the screen
@@ -136,19 +149,33 @@ function drawMap() {
 		}
 	}
 	
-	//second pass: draw containers
+	//second pass: draw tile containers
+	var hoveringContainer = null;
 	ctx.beginPath();
-	ctx.strokeStyle = "rgba(255,255,255,.5)";
 	ctx.lineWidth="2";
+	ctx.strokeStyle = "rgba(255,255,255,.5)";
 	for (var i = 0; i < map.length; i += containerSize) {
 		for (var r = 0; r < map[i].length; r += containerSize) {
 			if (tileVisible(r,i,containerSize) && tileMouseDistance(r,i,containerSize) <= 10*tileSize) {
+				//check for mouse hovering over tiles here so we don't waste time checking every tile again
+				if (checkContainerHovering(r,i)) {
+					hoveringContainer = [i,r];
+				}
 				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 			}
 		}
 	}
 	ctx.stroke();
 	ctx.closePath();
+	
+	//if the mouse is hovering over a tile container, render it in a full white line
+	if (hoveringContainer) {
+		ctx.strokeStyle = "rgba(255,255,255,1)";
+		ctx.beginPath();
+		ctx.rect(hoveringContainer[1]*tileSize-scrollX,hoveringContainer[0]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+		ctx.stroke();
+		ctx.endPath();
+	}
 }
 
 

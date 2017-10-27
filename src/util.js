@@ -70,6 +70,29 @@ function getDistance(x1,y1,x2,y2) {
 }
 
 /**
+ * check for a collision between objects a and b
+ * @param a: the first collision object
+ * @param b: the second collision object
+ * @returns whether there is a collision between the objects (true) or not (false)
+ */
+function collisionCheck(a,b) {
+	return (Math.abs(a.x - b.x) * 2 < (a.width + b.width)) &&
+    (Math.abs(a.y - b.y) * 2 < (a.height + b.height));
+}
+
+/**
+ * check for a collision between a point and a rect
+ * @param px: the x coordinate of our point
+ * @param py: the y coordinate of our point
+ * @param obj: the object whose rect we check for contained point
+ * @returns whether the point (px,py) is contained in obj's rect (true) or not (false)
+ */
+function pointInRect(px,py,obj) {
+	return (px > obj.x - obj.width/2 && px < obj.x + obj.width/2
+	&& py > obj.y - obj.height/2 && py < obj.y + obj.height/2); 
+}
+
+/**
  * update the global deltaTime
  */
 function updateTime() {
