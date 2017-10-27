@@ -67,7 +67,10 @@ function updateScroll() {
 	else if (keyStates["D"]) {
 		scrollX += tileSize;
 	}
-	//console.log(scrollY);
+	
+	//keep scroll values in-bounds, such that at least 1 tile is visible at all times
+	scrollX = Math.min(Math.max(scrollX, -cnv.width + tileSize),scripts[activeMap.name].map[0].length*tileSize - tileSize);
+	scrollY = Math.min(Math.max(scrollY, -cnv.height + tileSize),scripts[activeMap.name].map.length*tileSize - tileSize);
 
 }
 
@@ -85,6 +88,9 @@ function render() {
 	for (var i = 0; i < objects.length; ++i) {
 		drawCentered(objects[i].image,objects[i].canvas.getContext("2d"), objects[i].x, objects[i].y,objects[i].dir);
 	}
+	
+	//finally draw the HUD
+	drawHUD();
 }
 
 /**
@@ -133,6 +139,21 @@ function checkContainerHovering(x,y) {
 	return pointInRect(cnv.mousePos.x, cnv.mousePos.y, {x:centerX, y:centerY, width:extents, height:extents});
 }
 
+/**
+ * draw the HUD
+ */
+function drawHUD() {
+	//start with a semi-transparent black rectangle to make text more visible
+	ctx.fillStyle = "rgba(0,0,0,.5)";
+	ctx.fillRect(0,0,cnv.width,50);
+	
+	//now display our text-labels
+	ctx.font = "24px Arial";
+	ctx.fillStyle = "rgba(255,255,255,1)";
+	ctx.fillText("Map: " + activeMap.name,10,32);
+	ctx.fillText("Scroll: " + scrollX + ", " + scrollY, 175,32);
+	ctx.fillText("Mode: " + activeMode.name, 400, 32);
+}
 
 /**
  * draw the currently active map to the screen
@@ -238,6 +259,10 @@ function initGlobals() {
 	//scroll values dictate the current camera scroll (in pixels)
 	scrollX = 0;
 	scrollY = 0;
+	
+	//game-modes enum
+	modes = new enums.Enum("tile","waypoint","quadtree");
+	activeMode = modes.tile;
 		
 	//global game objects
 	objects = [];
