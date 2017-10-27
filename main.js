@@ -174,7 +174,7 @@ function drawMap() {
 		ctx.beginPath();
 		ctx.rect(hoveringContainer[1]*tileSize-scrollX,hoveringContainer[0]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 		ctx.stroke();
-		ctx.endPath();
+		ctx.closePath();
 	}
 }
 
