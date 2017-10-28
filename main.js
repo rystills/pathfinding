@@ -75,28 +75,28 @@ function renderMap() {
  * check if the user is attempting to switch maps
  */
 function checkChangeMap() {
-	if (keyStates["R"]) {
-		//keep track of 'RHeld' to ensure that each R press only changes the mode once
-		if (!RHeld) {
-			activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
-			RHeld = true;
-		}
-	}
-	else {
-		RHeld = false;
-	}
-	
-	
 	if (keyStates["E"]) {
-		//keep track of 'EHeld' to ensure that each E press only changes the map once
+		//keep track of 'EHeld' to ensure that each R press only changes the mode once
 		if (!EHeld) {
-			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+			activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
 			EHeld = true;
-			renderMap();
 		}
 	}
 	else {
 		EHeld = false;
+	}
+	
+	
+	if (keyStates["Q"]) {
+		//keep track of 'QHeld' to ensure that each E press only changes the map once
+		if (!QHeld) {
+			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+			QHeld = true;
+			renderMap();
+		}
+	}
+	else {
+		QHeld = false;
 	}
 }
 
@@ -333,8 +333,8 @@ function initGlobals() {
 	fps = 60;
 	
 	//global keyHeld bools for single-press keys
-	RHeld = false;
 	EHeld = false;
+	QHeld = false;
 	
 	//init global time vars for delta time calculation
 	prevTime = Date.now();
