@@ -228,6 +228,12 @@ function drawMap() {
 				//check for mouse hovering over tiles here so we don't waste time checking every tile again
 				if (checkContainerHovering(r,i)) {
 					hoveringContainer = [i,r];
+					if (mousePressedLeft) {
+						addBlock(r,i);
+					}
+					else if (mousePressedRight) {
+						removeBlock(r,i);
+					}
 				}
 				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 			}
@@ -235,6 +241,16 @@ function drawMap() {
 	}
 	ctx.stroke();
 	ctx.closePath();
+	
+	//next draw user-added blocked
+	for (var block in blocks) {
+	    if (blocks.hasOwnProperty(block)) {
+	    	if (tileVisible(blocks[block][0],blocks[block][1],containerSize)) {
+	    		ctx.drawImage(images["userBlock" + (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],
+	    				blocks[block][0]*tileSize-scrollX,blocks[block][1]*tileSize-scrollY);	
+	    	}
+	    }
+    }
 	
 	//if the mouse is hovering over a tile container, render it in a full white line
 	if (hoveringContainer) {
@@ -244,6 +260,35 @@ function drawMap() {
 		ctx.stroke();
 		ctx.closePath();
 	}
+}
+
+/**
+ * add a user-added block to location x,y, if one does not exist there
+ * @param x: the leftmost coordinate of the desired tile group
+ * @param x: the topmost coordinate of the desired tile group
+ * @returns whether a block was added to the specified location (true) or not (false)
+ */
+function addBlock(x,y) {
+	desiredBlock = blocks[x+","+y];
+	if (!desiredBlock) {
+		blocks[x+","+y] = [x,y];
+		return true;
+	}
+	return false;
+}
+
+/**
+ * remove a user-added block from location x,y, if one exists there
+ * @param x: the leftmost coordinate of the desired tile group
+ * @param x: the topmost coordinate of the desired tile group
+ * @returns whether a block was removed from the specified location (true) or not (false)
+ */
+function removeBlock(x,y) {
+    if (blocks.hasOwnProperty(x+","+y)) {
+    	delete blocks[x+","+y];
+    	return true;
+    }
+    return false;
 }
 
 
@@ -267,6 +312,7 @@ function loadAssets() {
 		"images\\tree.png", "images\\floor.png", "images\\void.png", //normal tile images
 		"images\\tree small.png", "images\\floor small.png", "images\\void small.png", //small tile images
 		"images\\tree tiny.png", "images\\floor tiny.png", "images\\void tiny.png", //tiny tile images
+		"images\\userBlock.png", "images\\userBlock small.png", "images\\userBlock tiny.png", //user block images
 		"maps\\arena2.js", "maps\\hrt201n.js" //maps
 		];
 	
@@ -320,9 +366,17 @@ function initGlobals() {
 	//global game objects
 	objects = [];
 	
+	//object containing hashed block locations in form x,y
+	blocks = {};
+	
 	//render the map once at game start
 	renderMap();
 }
+
+//disallow right-click context menu as right click functionality is necessary for block removal
+document.body.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
 
 //initialize a reference to the canvas first, then begin loading the game
 initCanvas();
