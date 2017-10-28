@@ -228,10 +228,10 @@ function drawMap() {
 				//check for mouse hovering over tiles here so we don't waste time checking every tile again
 				if (checkContainerHovering(r,i)) {
 					hoveringContainer = [i,r];
-					if (mousePressedLeft) {
+					if (mouseDownLeft) {
 						addBlock(r,i);
 					}
-					else if (mousePressedRight) {
+					else if (mouseDownRight) {
 						removeBlock(r,i);
 					}
 				}
