@@ -222,9 +222,10 @@ function drawMap() {
 	ctx.beginPath();
 	ctx.lineWidth="2";
 	ctx.strokeStyle = "rgba(255,255,255,.5)";
+	var maxMouseDistance = 10*tileSize;
 	for (var i = 0; i < map.length; i += containerSize) {
 		for (var r = 0; r < map[i].length; r += containerSize) {
-			if (tileVisible(r,i,containerSize) && tileMouseDistance(r,i,containerSize) <= 10*tileSize) {
+			if (tileMouseDistance(r,i,containerSize) <= maxMouseDistance && tileVisible(r,i,containerSize)) {
 				//check for mouse hovering over tiles here so we don't waste time checking every tile again
 				if (checkContainerHovering(r,i)) {
 					hoveringContainer = [i,r];
@@ -259,6 +260,45 @@ function drawMap() {
 		ctx.rect(hoveringContainer[1]*tileSize-scrollX,hoveringContainer[0]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 		ctx.stroke();
 		ctx.closePath();
+	}
+}
+
+/**
+ * get the adjacent space to terrain indices x,y in direction dir. If no direction is specified, get all 4 adjacent spaces
+ * @param terrain: the terrain to check against
+ * @param x: the first index representing the desired terrain position
+ * @param y: the second index representing the desired terrain position
+ * @param dir: the direction (up, down, left, or right) of the adjacent space to return. Returns all spaces if unspecified.
+ * @returns the resulting space or spaces, or null if the adjacent space does not exist.
+ * @throws: direction error if dir is not one of the cardinal directions or null
+ */
+function adjacentSpace(terrain,x,y,dir) {
+	if (dir == "up") {
+		if (y > 0) {
+			return terrain[y-1][x];
+		}
+		return null;
+	}
+	else if (dir == "down") {
+		if (y < terrain.length-1) {
+			return terrain[y+1][x];
+		}
+		return null;
+	}
+	else if (dir == "left") {
+		if (x > 0) {
+			return terrain[y][x-1];
+		}
+		return null;
+	}
+	else if (dir == "right") {
+		if (x < terrain[y].length - 1) {
+			return terrain[y][x+1];
+		}
+		return null;
+	}
+	else {
+		throw "ERROR: getAdjacent direction: '" + dir + "' not recognized";
 	}
 }
 
