@@ -219,16 +219,17 @@ function drawMap() {
 	//second pass: draw tile containers
 	var map = scripts[activeMap.name].map;
 	var hoveringContainer = null;
-	ctx.beginPath();
-	ctx.lineWidth="2";
-	ctx.strokeStyle = "rgba(255,255,255,.5)";
+	
+	//gather all valid and invalid tiles in range of the mouse
 	var maxMouseDistance = 10*tileSize;
+	var validMouseTiles = [];
+	var invalidMouseTiles = [];
 	for (var i = 0; i < map.length; i += containerSize) {
 		for (var r = 0; r < map[i].length; r += containerSize) {
 			if (tileMouseDistance(r,i,containerSize) <= maxMouseDistance && tileVisible(r,i,containerSize)) {
 				//check for mouse hovering over tiles here so we don't waste time checking every tile again
 				if (checkContainerHovering(r,i)) {
-					hoveringContainer = [i,r];
+					hoveringContainer = [r,i];
 					//add a block on left mouse press, and remove a block on right mouse press
 					if (mouseDownLeft) {
 						addBlock(r,i);
@@ -237,14 +238,18 @@ function drawMap() {
 						removeBlock(r,i);
 					}
 				}
-				ctx.rect(r*tileSize-scrollX,i*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+				//add the current tile to either valid or invalid list, depending on whether or not it is walkable
+				if (containerWalkable(map,r,i)) {
+					validMouseTiles.push([r,i]);
+				}
+				else {
+					invalidMouseTiles.push([r,i]);
+				}
 			}
 		}
 	}
-	ctx.stroke();
-	ctx.closePath();
 	
-	//next draw user-added blocked
+	//draw user-added blocks first
 	for (var block in blocks) {
 	    if (blocks.hasOwnProperty(block)) {
 	    	if (tileVisible(blocks[block][0],blocks[block][1],containerSize)) {
@@ -253,27 +258,45 @@ function drawMap() {
 	    	}
 	    }
     }
+		
+	//draw valid tiles in green
+	ctx.beginPath();
+	ctx.fillStyle = "rgba(0,255,0,.5)";
+	for (var i = 0; i < validMouseTiles.length; ++i) {
+		ctx.fillRect(validMouseTiles[i][0]*tileSize-scrollX,validMouseTiles[i][1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+	}
+	ctx.stroke();
+	ctx.closePath();
 	
-	//if the mouse is hovering over a tile container, render it in a full white line
+	//draw invalid tiles in red
+	ctx.beginPath();
+	ctx.fillStyle = "rgba(255,0,0,.5)";
+	for (var i = 0; i < invalidMouseTiles.length; ++i) {
+		ctx.fillRect(invalidMouseTiles[i][0]*tileSize-scrollX,invalidMouseTiles[i][1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+	}
+	ctx.stroke();
+	ctx.closePath();
+	
+	//if the mouse is hovering over a tile container, render it again with double thickness
 	if (hoveringContainer) {
-		ctx.strokeStyle = "rgba(255,255,255,1)";
+		ctx.fillStyle = containerWalkable(map,hoveringContainer[0],hoveringContainer[1]) ? "rgba(0,255,0,1)" : "rgba(255,0,0,1)";
 		ctx.beginPath();
-		ctx.rect(hoveringContainer[1]*tileSize-scrollX,hoveringContainer[0]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+		ctx.fillRect(hoveringContainer[0]*tileSize-scrollX,hoveringContainer[1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
 		ctx.stroke();
 		ctx.closePath();
 	}
 }
 
 /**
- * get the adjacent space to terrain indices x,y in direction dir
+ * get the adjacent container to terrain indices x,y in direction dir
  * @param terrain: the terrain to check against
  * @param x: the first index representing the desired terrain position
  * @param y: the second index representing the desired terrain position
- * @param dir: the direction (up, down, left, or right) of the adjacent space to return
- * @returns an object containing the x,y indicies of the desired space, as well as its type, or null if no such space exists
+ * @param dir: the direction (up, down, left, or right) of the adjacent container to return
+ * @returns an object containing the x,y indicies of the desired container, as well as its type, or null if no such container exists
  * @throws: direction error if dir is not one of the cardinal directions, position error if x,y is not contained in terrain
  */
-function adjacentSpace(terrain,x,y,dir) {
+function adjacentContainer(terrain,x,y,dir) {
 	if (!directions.contains(dir)) {
 		throw "ERROR: getAdjacent direction: '" + dir + "' not recognized";
 	}
@@ -299,6 +322,34 @@ function adjacentSpace(terrain,x,y,dir) {
 		}
 	}
 	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
+}
+
+/**
+ * get whether or not the container at location x,y on terrain can be traversed
+ * @param terrain: the terrain to check against
+ * @param x: the first index representing the desired terrain position
+ * @param y: the second index representing the desired terrain position
+ * @returns whether the desired container can be traversed (true) or not (false)
+ */
+function containerWalkable(terrain,x,y) {
+	//can't walk on containers that contain more than one non-walkable tile
+	var blockPercentage = 0;
+	for (var i = 0; i < 2; ++i) {
+		for (var r = 0; r < 2; ++r) {
+			if (terrain[y+i][x+r] != '.') {
+				if (++blockPercentage == 2) {
+					return false;
+				}
+			}
+		}
+	}
+	
+	//cant walk on containers that are covered by a user block
+	if (blocks[x+","+y]) {
+		return false;
+	}
+	//all checks passed, so we can walk here!
+	return true;
 }
 
 /**
