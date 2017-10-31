@@ -229,6 +229,7 @@ function drawMap() {
 				//check for mouse hovering over tiles here so we don't waste time checking every tile again
 				if (checkContainerHovering(r,i)) {
 					hoveringContainer = [i,r];
+					//add a block on left mouse press, and remove a block on right mouse press
 					if (mouseDownLeft) {
 						addBlock(r,i);
 					}
@@ -264,42 +265,40 @@ function drawMap() {
 }
 
 /**
- * get the adjacent space to terrain indices x,y in direction dir. If no direction is specified, get all 4 adjacent spaces
+ * get the adjacent space to terrain indices x,y in direction dir
  * @param terrain: the terrain to check against
  * @param x: the first index representing the desired terrain position
  * @param y: the second index representing the desired terrain position
- * @param dir: the direction (up, down, left, or right) of the adjacent space to return. Returns all spaces if unspecified.
- * @returns the resulting space or spaces, or null if the adjacent space does not exist.
- * @throws: direction error if dir is not one of the cardinal directions or null
+ * @param dir: the direction (up, down, left, or right) of the adjacent space to return
+ * @returns the resulting space, or null if no such space exists
+ * @throws: direction error if dir is not one of the cardinal directions, position error if x,y is not contained in terrain
  */
 function adjacentSpace(terrain,x,y,dir) {
-	if (dir == "up") {
+	if (!directions.contains(dir)) {
+		throw "ERROR: getAdjacent direction: '" + dir + "' not recognized";
+	}
+	
+	if (dir == directions.up) {
 		if (y > 0) {
 			return terrain[y-1][x];
 		}
-		return null;
 	}
-	else if (dir == "down") {
+	else if (dir == directions.down) {
 		if (y < terrain.length-1) {
 			return terrain[y+1][x];
 		}
-		return null;
 	}
-	else if (dir == "left") {
+	else if (dir == directions.left) {
 		if (x > 0) {
 			return terrain[y][x-1];
 		}
-		return null;
 	}
-	else if (dir == "right") {
+	else if (dir == directions.right) {
 		if (x < terrain[y].length - 1) {
 			return terrain[y][x+1];
 		}
-		return null;
 	}
-	else {
-		throw "ERROR: getAdjacent direction: '" + dir + "' not recognized";
-	}
+	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
 }
 
 /**
@@ -402,7 +401,10 @@ function initGlobals() {
 	//game-modes enum
 	modes = new enums.Enum("tile","waypoint","quadtree");
 	activeMode = modes.tile;
-		
+	
+	//cardinal directions enum
+	directions = new enums.Enum("up","left","down","right");
+	
 	//global game objects
 	objects = [];
 	
