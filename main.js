@@ -270,7 +270,7 @@ function drawMap() {
  * @param x: the first index representing the desired terrain position
  * @param y: the second index representing the desired terrain position
  * @param dir: the direction (up, down, left, or right) of the adjacent space to return
- * @returns the resulting space, or null if no such space exists
+ * @returns an object containing the x,y indicies of the desired space, as well as its type, or null if no such space exists
  * @throws: direction error if dir is not one of the cardinal directions, position error if x,y is not contained in terrain
  */
 function adjacentSpace(terrain,x,y,dir) {
@@ -279,23 +279,23 @@ function adjacentSpace(terrain,x,y,dir) {
 	}
 	
 	if (dir == directions.up) {
-		if (y > 0) {
-			return terrain[y-1][x];
+		if (y >= containerSize) {
+			return {"x":x,"y":y-containerSize, "type":terrain[y-containerSize][x]};
 		}
 	}
 	else if (dir == directions.down) {
-		if (y < terrain.length-1) {
-			return terrain[y+1][x];
+		if (y < terrain.length-containerSize) {
+			return {"x":x,"y":y+containerSize, "type":terrain[y+containerSize][x]};
 		}
 	}
 	else if (dir == directions.left) {
-		if (x > 0) {
-			return terrain[y][x-1];
+		if (x >= containerSize) {
+			return {"x":x-containerSize,"y":y, "type":terrain[y][x-containerSize]};
 		}
 	}
 	else if (dir == directions.right) {
-		if (x < terrain[y].length - 1) {
-			return terrain[y][x+1];
+		if (x < terrain[y].length - containerSize) {
+			return {"x":x+containerSize,"y":y, "type":terrain[y][x+containerSize]};
 		}
 	}
 	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
