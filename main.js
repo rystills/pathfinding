@@ -77,6 +77,14 @@ function renderMap() {
 }
 
 /**
+ * change the current active block type that the user is placing
+ */
+function changeBlockType() {
+	activeBlockType = (activeBlockType == blockTypes.obstacle ? blockTypes.start : (activeBlockType == blockTypes.start ? blockTypes.goal : blockTypes.obstacle));
+	this.text = "Block Type: " + activeBlockType.name;
+}
+
+/**
  * toggle the max mouse distance at which to show containers between 200px and 10,000px 
  */
 function changeMaxMouseDistance() {
@@ -266,16 +274,6 @@ function drawMap() {
 			}
 		}
 	}
-	
-	//draw user-added blocks first
-	for (var block in blocks) {
-	    if (blocks.hasOwnProperty(block)) {
-	    	if (tileVisible(blocks[block][0],blocks[block][1],containerSize)) {
-	    		ctx.drawImage(images["userBlock" + (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],
-	    				blocks[block][0]*tileSize-scrollX,blocks[block][1]*tileSize-scrollY);	
-	    	}
-	    }
-    }
 		
 	//draw valid tiles in green
 	ctx.beginPath();
@@ -294,6 +292,18 @@ function drawMap() {
 	}
 	ctx.stroke();
 	ctx.closePath();
+	
+	//draw user-added blocks
+	for (var block in blocks) {
+	    if (blocks.hasOwnProperty(block)) {
+	    	if (tileVisible(blocks[block].x,blocks[block].y,containerSize)) {
+	    		ctx.drawImage(images[
+	    			(blocks[block].type == blockTypes.obstacle ? "userBlock" : (blocks[block].type == blockTypes.goal ? "goalSpace" : "startSpace"))
+	    				+ (tileSize == 16 ? "" : (tileSize == 8 ? " small" : " tiny"))],
+	    				blocks[block].x*tileSize-scrollX,blocks[block].y*tileSize-scrollY);	
+	    	}
+	    }
+    }
 	
 	//if the mouse is hovering over a tile container, render it again with double thickness
 	if (hoveringContainer) {
@@ -363,7 +373,7 @@ function containerWalkable(terrain,x,y) {
 	}
 	
 	//cant walk on containers that are covered by a user block
-	return (!(blocks[x+","+y]));
+	return (!(blocks[x+","+y] && blocks[x+","+y].type == blockTypes.obstacle));
 }
 
 /**
@@ -375,7 +385,7 @@ function containerWalkable(terrain,x,y) {
 function addBlock(x,y) {
 	desiredBlock = blocks[x+","+y];
 	if (!desiredBlock) {
-		blocks[x+","+y] = [x,y];
+		blocks[x+","+y] = {"x":x,"y":y, "type":activeBlockType};
 		return true;
 	}
 	return false;
@@ -420,6 +430,8 @@ function loadAssets() {
 		"images\\tree small.png", "images\\floor small.png", "images\\void small.png", //small tile images
 		"images\\tree tiny.png", "images\\floor tiny.png", "images\\void tiny.png", //tiny tile images
 		"images\\userBlock.png", "images\\userBlock small.png", "images\\userBlock tiny.png", //user block images
+		"images\\startSpace.png", "images\\startSpace small.png", "images\\startSpace tiny.png", //goal space images
+		"images\\goalSpace.png", "images\\goalSpace small.png", "images\\goalSpace tiny.png", //start space images
 		"maps\\arena2.js", "maps\\hrt201n.js", //maps
 		"src\\classes\\Button.js" //classes
 		];
@@ -470,6 +482,10 @@ function initGlobals() {
 	modes = new enums.Enum("tile","waypoint","quadtree");
 	activeMode = modes.tile;
 	
+	//placeable block types enum
+	blockTypes = new enums.Enum("obstacle", "start", "goal");
+	activeBlockType = blockTypes.obstacle;
+	
 	//cardinal directions enum
 	directions = new enums.Enum("up","left","down","right");
 	
@@ -481,6 +497,7 @@ function initGlobals() {
 	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap))
 	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode))
 	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance))
+	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType))
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
