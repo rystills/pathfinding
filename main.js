@@ -102,12 +102,20 @@ function changeMode() {
 }
 
 /**
+ * delete all user-created blocks
+ */
+function clearBlocks() {
+	blocks = {};
+}
+
+/**
  * change to the next map
  */
 function changeMap() {
 	activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
 	renderMap();
 	this.text = "Map: " + activeMap.name;
+	clearBlocks();
 }
 
 /**
@@ -383,11 +391,25 @@ function containerWalkable(terrain,x,y) {
  * @returns whether a block was added to the specified location (true) or not (false)
  */
 function addBlock(x,y) {
+	//we can't have more than one of any block type besides obstacle
+	if (activeBlockType != blockTypes.obstacle) {
+		for (var block in blocks) {
+		    if (blocks.hasOwnProperty(block)) {
+		    	if (blocks[block].type == activeBlockType) {
+		    		//this block type already exists, so we can't add another one
+		    		return;
+		    	}
+		    }
+		}
+	}
 	desiredBlock = blocks[x+","+y];
 	if (!desiredBlock) {
+		//no block was found, so add one
 		blocks[x+","+y] = {"x":x,"y":y, "type":activeBlockType};
 		return true;
 	}
+	
+	//this spot is already occupied by a block
 	return false;
 }
 
