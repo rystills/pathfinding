@@ -77,6 +77,14 @@ function renderMap() {
 }
 
 /**
+ * toggle the max mouse distance at which to show containers between 200px and 10,000px 
+ */
+function changeMaxMouseDistance() {
+	maxMouseDistance = (maxMouseDistance == 200 ? 10000 : 200);
+	this.text = "Show Tiles: " + (maxMouseDistance == 200 ? "Near Mouse" : "Always");
+}
+
+/**
  * change to the next mode
  * @returns
  */
@@ -232,7 +240,6 @@ function drawMap() {
 	var hoveringContainer = null;
 	
 	//gather all valid and invalid tiles in range of the mouse
-	var maxMouseDistance = 1000*tileSize;
 	var validMouseTiles = [];
 	var invalidMouseTiles = [];
 	for (var i = 0; i < map.length; i += containerSize) {
@@ -460,6 +467,9 @@ function initGlobals() {
 	scrollX = 0;
 	scrollY = 0;
 	
+	//max mouse distance stores the maximum distance a container can be from the mouse in order to still be rendered
+	maxMouseDistance = 200;
+	
 	//game-modes enum
 	modes = new enums.Enum("tile","waypoint","quadtree");
 	activeMode = modes.tile;
@@ -474,6 +484,7 @@ function initGlobals() {
 	buttons = [];
 	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap))
 	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode))
+	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance))
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
