@@ -201,10 +201,10 @@ function drawHUD() {
 	//display our text-labels
 	for (var i = 0; i < buttons.length; ++i) {
 		var btnctx = buttons[i].canvas.getContext("2d");
-		//fill red border color
-		btnctx.fillStyle = "rgb(" + 
-		Math.round(buttons[i].blendWhiteness *.75) + ", " + 
+		//fill light blue border color
+		btnctx.fillStyle = "rgb(" +  
 		Math.round(.15 * buttons[i].blendWhiteness) + ", " + 
+		Math.round(buttons[i].blendWhiteness *.75) + ", " + 
 		Math.round(.1 * buttons[i].blendWhiteness) + ")";
 		btnctx.fillRect(buttons[i].x, buttons[i].y, buttons[i].width,buttons[i].height);
 		
@@ -281,7 +281,7 @@ function drawMap() {
 	ctx.beginPath();
 	ctx.fillStyle = "rgba(0,255,0,.5)";
 	for (var i = 0; i < validMouseTiles.length; ++i) {
-		ctx.fillRect(validMouseTiles[i][0]*tileSize-scrollX,validMouseTiles[i][1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+		ctx.fillRect(validMouseTiles[i][0]*tileSize-scrollX+1,validMouseTiles[i][1]*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
 	ctx.stroke();
 	ctx.closePath();
@@ -290,7 +290,7 @@ function drawMap() {
 	ctx.beginPath();
 	ctx.fillStyle = "rgba(255,0,0,.5)";
 	for (var i = 0; i < invalidMouseTiles.length; ++i) {
-		ctx.fillRect(invalidMouseTiles[i][0]*tileSize-scrollX,invalidMouseTiles[i][1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
+		ctx.fillRect(invalidMouseTiles[i][0]*tileSize-scrollX+1,invalidMouseTiles[i][1]*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
 	ctx.stroke();
 	ctx.closePath();
@@ -439,10 +439,6 @@ function loadAssets() {
 function initGlobals() {
 	//keep a global fps flag for game-speed (although all speeds should use deltaTime)
 	fps = 60;
-	
-	//global keyHeld bools for single-press keys
-	EHeld = false;
-	QHeld = false;
 	
 	//init global time vars for delta time calculation
 	prevTime = Date.now();
