@@ -16,11 +16,13 @@ function setupKeyListeners() {
 	mousePressedLeft = false;
 	mouseDownRight = false;
 	mousePressedRight = false;
-	cnv.mousePos = {x:-99999,y:-99999};
+	cnv.mousePos = {x:cnv.width/2,y:cnv.height/2};
+	uicnv.mousePos = {x:-1,y:-1};
 	
 	document.body.addEventListener("mousemove", function (e) {
 		//store the relative mouse position for our canvas
 		cnv.mousePos = getMouseDocument(e,cnv);
+		uicnv.mousePos = getMouseDocument(e,uicnv);
 	});
 	document.body.addEventListener("mousedown", function (e) {
 		if (e.button == 0) {

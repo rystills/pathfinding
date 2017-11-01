@@ -1,9 +1,12 @@
 /**
- * clear the canvas to a predetermined fillcolor, preparing it for a fresh render
+ * clear each canvas to a predetermined fillcolor, preparing it for a fresh render
  */
 function clearScreen() {
 	ctx.fillStyle="rgb(22,19,58)";
 	ctx.fillRect(0,0,cnv.width,cnv.height);
+	
+	uictx.fillStyle="rgb(0,0,0)";
+	uictx.fillRect(0,0,uicnv.width,uicnv.height);
 }
 
 /**
@@ -195,18 +198,14 @@ function checkContainerHovering(x,y) {
 /**
  * draw the HUD
  */
-function drawHUD() {
-	//start with a semi-transparent black rectangle to make text more visible
-	ctx.fillStyle = "rgba(0,0,0,.5)";
-	ctx.fillRect(0,0,cnv.width,50);
-	
-	//now display our text-labels
-	ctx.font = "24px Arial";
-	ctx.fillStyle = "rgba(255,255,255,1)";
-	ctx.fillText("Map: " + activeMap.name,10,32);
-	ctx.fillText("Scroll: " + scrollX + ", " + scrollY, 175,32);
-	ctx.fillText("Mode: " + activeMode.name, 400, 32);
-	ctx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 600,32);
+function drawHUD() {	
+	//display our text-labels
+	uictx.font = "24px Arial";
+	uictx.fillStyle = "rgba(255,255,255,1)";
+	uictx.fillText("Map: " + activeMap.name,10,29);
+	uictx.fillText("Scroll: " + scrollX + ", " + scrollY, 10,69);
+	uictx.fillText("Mode: " + activeMode.name, 10, 109);
+	uictx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 10,149);
 }
 
 /**
@@ -221,7 +220,7 @@ function drawMap() {
 	var hoveringContainer = null;
 	
 	//gather all valid and invalid tiles in range of the mouse
-	var maxMouseDistance = 10*tileSize;
+	var maxMouseDistance = 1000*tileSize;
 	var validMouseTiles = [];
 	var invalidMouseTiles = [];
 	for (var i = 0; i < map.length; i += containerSize) {
@@ -345,11 +344,7 @@ function containerWalkable(terrain,x,y) {
 	}
 	
 	//cant walk on containers that are covered by a user block
-	if (blocks[x+","+y]) {
-		return false;
-	}
-	//all checks passed, so we can walk here!
-	return true;
+	return (!(blocks[x+","+y]));
 }
 
 /**
@@ -383,12 +378,15 @@ function removeBlock(x,y) {
 
 
 /**
- * initialize a reference to our canvas and context
+ * initialize a reference to each of our canvases and contexts
  */
-function initCanvas() {
+function initCanvases() {
 	//create appropriately named references to all of our canvases
 	cnv = document.getElementById("cnv");
 	ctx = cnv.getContext("2d");
+	
+	uicnv = document.getElementById("uicnv");
+	uictx = uicnv.getContext("2d");
 }
 
 /**
@@ -403,7 +401,8 @@ function loadAssets() {
 		"images\\tree small.png", "images\\floor small.png", "images\\void small.png", //small tile images
 		"images\\tree tiny.png", "images\\floor tiny.png", "images\\void tiny.png", //tiny tile images
 		"images\\userBlock.png", "images\\userBlock small.png", "images\\userBlock tiny.png", //user block images
-		"maps\\arena2.js", "maps\\hrt201n.js" //maps
+		"maps\\arena2.js", "maps\\hrt201n.js", //maps
+		"src\\classes\\Button.js" //classes
 		];
 	
 	//manually load the asset loader
@@ -472,5 +471,5 @@ document.body.addEventListener('contextmenu', function(e) {
 });
 
 //initialize a reference to the canvas first, then begin loading the game
-initCanvas();
+initCanvases();
 loadAssets();
