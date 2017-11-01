@@ -85,11 +85,16 @@ function collisionCheck(a,b) {
  * @param px: the x coordinate of our point
  * @param py: the y coordinate of our point
  * @param obj: the object whose rect we check for contained point
+ * @param objectPosIsTopLeft: whether obj's position represents its top-left (true) or its center (false)
  * @returns whether the point (px,py) is contained in obj's rect (true) or not (false)
  */
-function pointInRect(px,py,obj) {
+function pointInRect(px,py,obj, objectPosIsTopLeft) {
+	if (objectPosIsTopLeft) {
+		return (px > obj.x && px < obj.x + obj.width && py > obj.y && py < obj.y + obj.height);
+	}
 	return (px > obj.x - obj.width/2 && px < obj.x + obj.width/2
-	&& py > obj.y - obj.height/2 && py < obj.y + obj.height/2); 
+			&& py > obj.y - obj.height/2 && py < obj.y + obj.height/2); 	
+	
 }
 
 /**

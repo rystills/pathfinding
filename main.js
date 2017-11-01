@@ -18,16 +18,18 @@ function update() {
 	
 	//update camera scrolling
 	updateScroll();
-	
-	//check if the user triggered a map change
-	checkChangeMap();
-	
+		
 	//check if the user triggered a zoom change
 	checkChangeZoom();
 	
 	//update objects
 	for (var i = 0; i < objects.length; ++i) {
 		objects[i].update();
+	}
+	
+	//update GUI elements
+	for (var i = 0; i < buttons.length; ++i) {
+		buttons[i].update();	
 	}
 	
 	//once all updates are out of the way, render the frame
@@ -75,32 +77,21 @@ function renderMap() {
 }
 
 /**
- * check if the user is attempting to switch maps
+ * change to the next mode
+ * @returns
  */
-function checkChangeMap() {
-	if (keyStates["E"]) {
-		//keep track of 'EHeld' to ensure that each R press only changes the mode once
-		if (!EHeld) {
-			activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
-			EHeld = true;
-		}
-	}
-	else {
-		EHeld = false;
-	}
-	
-	
-	if (keyStates["Q"]) {
-		//keep track of 'QHeld' to ensure that each E press only changes the map once
-		if (!QHeld) {
-			activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
-			QHeld = true;
-			renderMap();
-		}
-	}
-	else {
-		QHeld = false;
-	}
+function changeMode() {
+	activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
+	this.text = "Representation: " + activeMode.name;
+}
+
+/**
+ * change to the next map
+ */
+function changeMap() {
+	activeMap = (activeMap == maps.arena2 ? maps.hrt201n : maps.arena2);
+	renderMap();
+	this.text = "Map: " + activeMap.name;
 }
 
 /**
@@ -198,14 +189,35 @@ function checkContainerHovering(x,y) {
 /**
  * draw the HUD
  */
-function drawHUD() {	
+function drawHUD() {
 	//display our text-labels
+	for (var i = 0; i < buttons.length; ++i) {
+		var btnctx = buttons[i].canvas.getContext("2d");
+		//fill red border color
+		btnctx.fillStyle = "rgb(" + 
+		Math.round(buttons[i].blendWhiteness *.75) + ", " + 
+		Math.round(.15 * buttons[i].blendWhiteness) + ", " + 
+		Math.round(.1 * buttons[i].blendWhiteness) + ")";
+		btnctx.fillRect(buttons[i].x, buttons[i].y, buttons[i].width,buttons[i].height);
+		
+		//fill blue inner color
+		btnctx.fillStyle = "rgb(" + 
+		Math.round(buttons[i].blendWhiteness *.1) + ", " + 
+		Math.round(.15 * buttons[i].blendWhiteness) + ", " + 
+		Math.round(.75 * buttons[i].blendWhiteness) + ")";
+		btnctx.fillRect(buttons[i].x + 2, buttons[i].y + 2, buttons[i].width - 4,buttons[i].height - 4);
+		
+		//set the font size and color depending on the button's attributes and state
+		btnctx.font = buttons[i].fontSize + "px Arial";
+		btnctx.fillStyle = "rgb(" + buttons[i].blendWhiteness + ", " + buttons[i].blendWhiteness + ", " + buttons[i].blendWhiteness + ")";
+		
+		//draw the button label (add slight position offset to account for line spacing)
+		btnctx.fillText(buttons[i].text,buttons[i].x + 4, buttons[i].y + buttons[i].height/2 + 8);
+	}
 	uictx.font = "24px Arial";
-	uictx.fillStyle = "rgba(255,255,255,1)";
-	uictx.fillText("Map: " + activeMap.name,10,29);
-	uictx.fillText("Scroll: " + scrollX + ", " + scrollY, 10,69);
-	uictx.fillText("Mode: " + activeMode.name, 10, 109);
-	uictx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 10,149);
+	uictx.fillStyle = "#FFFFFF";
+	uictx.fillText("Scroll: " + scrollX + ", " + scrollY, 10,30);
+	uictx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 10,80);
 }
 
 /**
@@ -457,6 +469,11 @@ function initGlobals() {
 	
 	//global game objects
 	objects = [];
+	
+	//global list of UI buttons
+	buttons = [];
+	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap))
+	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode))
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};

@@ -4,7 +4,7 @@
 Button.prototype.update = function() {
 	//check mouse button status
 	//check if mouse is on this button 
-	var mousing = pointInRect(this.canvas.mousePos.x,this.canvas.mousePos.y,this);
+	var mousing = pointInRect(this.canvas.mousePos.x,this.canvas.mousePos.y,this,true);
 	if (mousing) {
 		//if mouse button was just pressed on us, toggle pressed on
 		if (mousePressedLeft) {
@@ -92,6 +92,6 @@ function Button(x,y,cnv, text, fontSize, clickFunc,clickArg) {
 	var context = this.canvas.getContext("2d");
 	context.font = this.fontSize + "px Arial";
 	//add a 4 pixel border to the text dimensions to make room for button outline + fill
-    this.width = context.measureText(this.text).width + 4;
+    this.width = context.measureText(this.text).width + 8;
     this.height = this.fontSize + 4;
 }
