@@ -23,6 +23,14 @@ function calculatePath(terrain,startSpace,goalSpace) {
 		return path;
 	}
 	
+	/**
+	 * helper function for calculatePath: compare two space objects' coordinates
+	 * @param other: the other object to check against
+	 */
+	function checkCoords(other) {
+		return other.x == this.x && other.y == this.y;
+	}
+	
 	//if the start space is the goal space, then the path is just that space
 	if (startSpace == goalSpace) {
 		return [startSpace];
@@ -33,13 +41,12 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	startSpace.parent = null;
 	startSpace.startDistance = 0;
 	
-	//initialize open and closed sets for breadth-first traversal
+	//initialize open set for traversal
 	var closedSet = [];
 	var openSet = [startSpace];
 	
 	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
 	while (openSet.length > 0) {
-		console.log(openSet.length);
 		//grab another space from the open set and push it to the closed set
 		var currentSpace = openSet.shift();
 		closedSet.push(currentSpace);
@@ -48,37 +55,53 @@ function calculatePath(terrain,startSpace,goalSpace) {
 		var adjacentSpaces = adjacentContainers(terrain,currentSpace.x,currentSpace.y);
 		
 		//main inner iteration: check each space in adjacentSpaces for validity
-		for (var k = 0; k < adjacentSpaces.length; ++k) {			
+		for (var k = 0; k < adjacentSpaces.length; ++k) {	
 			var newSpace = adjacentSpaces[k];
 			//if the newSpace is a goal, compose the path back to startSpace
-			if (newSpace == goalSpace) {
-				newSpace.parent = currentSpace; //start the path with currentSpace and work our way back
+			if (newSpace.x == goalSpace.x && newSpace.y == goalSpace.y) {
+				goalSpace.parent = currentSpace; //start the path with currentSpace and work our way back
 				return composePath(startSpace, goalSpace);
 			}
 			
-			//attempt to keep branching from newSpace as long as it is a walkable type
+			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
 			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
 				var newStartDistance = currentSpace.startDistance + 1;
-				
-				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
-				if ((closedSet.indexOf(newSpace) != -1) && (newSpace.startDistance < newStartDistance)) {
-					continue;
+
+				//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
+				var openSetIndex = openSet.findIndex(checkCoords,newSpace);
+				var inOpenSet = openSetIndex!= -1;
+				if (inOpenSet) {
+					newSpace = openSet[openSetIndex];
+				}
+				var closedSetIndex = closedSet.findIndex(checkCoords,newSpace);
+				var inClosedSet = closedSetIndex != -1;
+				if (inClosedSet) {
+					newSpace = closedSet[closedSetIndex];
 				}
 				
-				var notInOpenSet = openSet.indexOf(newSpace) == -1;
+				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
+				if (inClosedSet && (newSpace.startDistance <= newStartDistance)) {
+					continue;
+				}
+
 				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
-				if (notInOpenSet || newSpace.startDistance < newStartDistance) { 
+				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
 					//if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
-					if (notInOpenSet) {
+					if ((!inOpenSet)) {
 						openSet.splice(binarySearch(openSet,newSpace,"startDistance",true),0,newSpace);
+					}
+					//if newSpace is in the openSet, remove it now
+					if (inClosedSet) {
+						closedSet.splice(closedSetIndex,1);
 					}
 				}
 				
 			}
 		}
 	}
+	return null;
 }
 
 /**
@@ -436,7 +459,7 @@ function drawMap() {
  * @param x: the first index representing the desired terrain position
  * @param y: the second index representing the desired terrain position
  * @param dir: the direction (up, down, left, or right) of the adjacent container to return
- * @returns an object containing the x,y indicies of the desired container, as well as its type, or null if no such container exists
+ * @returns an object containing the x,y indicies of the desired container, or null if no such container exists
  * @throws: direction error if dir is not one of the cardinal directions, position error if final x,y is not contained in terrain
  */
 function adjacentContainer(terrain,x,y,dir) {
@@ -446,22 +469,22 @@ function adjacentContainer(terrain,x,y,dir) {
 	
 	if (dir == directions.up) {
 		if (y >= containerSize) {
-			return {"x":x,"y":y-containerSize, "type":terrain[y-containerSize][x]};
+			return {"x":x,"y":y-containerSize};
 		}
 	}
 	else if (dir == directions.down) {
 		if (y < terrain.length-containerSize) {
-			return {"x":x,"y":y+containerSize, "type":terrain[y+containerSize][x]};
+			return {"x":x,"y":y+containerSize};
 		}
 	}
 	else if (dir == directions.left) {
 		if (x >= containerSize) {
-			return {"x":x-containerSize,"y":y, "type":terrain[y][x-containerSize]};
+			return {"x":x-containerSize,"y":y};
 		}
 	}
 	else if (dir == directions.right) {
 		if (x < terrain[y].length - containerSize) {
-			return {"x":x+containerSize,"y":y, "type":terrain[y][x+containerSize]};
+			return {"x":x+containerSize,"y":y};
 		}
 	}
 	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
