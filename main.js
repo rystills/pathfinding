@@ -2,18 +2,35 @@
  * calculate the shortest path in a terrain from one space to another
  * @param terrain: the terrain in which to search for a path
  * @param startSpace: the space on which to begin the search
- * @param goalSpace: the desired goal space. If null, searches for a task that the input raider can perform instead.
+ * @param goalSpace: the desired goal space
  * @returns the shortest path from the start space to the goal space
  */
 function calculatePath(terrain,startSpace,goalSpace) { 
+	/**
+	 * helper function for calculatePath; composes the final path by tracing through space parents
+	 * @param startSpace: the starting space for the path
+	 * @param goalSpace: the goal space for the path
+	 * @returns an ordered list of spaces which form the final path
+	 */
+	function composePath() {
+		var path = [goalSpace];
+		var curSpace = goalSpace;
+		//iterate backwards from goalSpace to startSpace, adding each space to the final path list
+		while (curSpace != startSpace) {
+			curSpace = curSpace.parent;
+			path.unshift(curSpace);
+		}
+		return path;
+	}
+	
 	//if the start space is the goal space, then the path is just that space
 	if (startSpace == goalSpace) {
 		return [startSpace];
 	}
 	
 	//initialize goal and parent space properties
-	goalSpace.parents = [];	
-	startSpace.parents = [];
+	goalSpace.parent = null;
+	startSpace.parent = null;
 	startSpace.startDistance = 0;
 	
 	//initialize open and closed sets for breadth-first traversal
@@ -21,71 +38,36 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	var openSet = [startSpace];
 	
 	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
-	while (openSet.length > 0) {	
+	while (openSet.length > 0) {
+		//grab another space from the open set and push it to the closed set
 		var currentSpace = openSet.shift();
 		closedSet.push(currentSpace);
-		var adjacentSpaces = [];
-		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"up"));
-		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"down"));
-		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"left"));
-		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"right"));
+		
+		//gather a list of adjacent spaces
+		var adjacentSpaces = adjacentContainers(terrain,currentSpace.x,currentSpace.y);
 		
 		//main inner iteration: check each space in adjacentSpaces for validity
-		for (var k = 0; k < adjacentSpaces.length; k++) {
-			//if returnAllSolutions is True and we have surpassed finalPathDistance, exit immediately
-			if ((finalPathDistance != -1) && (currentSpace.startDistance + 1 > finalPathDistance)) {
-				return solutions;
-			}
-			
+		for (var k = 0; k < adjacentSpaces.length; ++k) {			
 			var newSpace = adjacentSpaces[k];
-			//check this here so that the algorithm is a little bit faster, but also so that paths to non-walkable terrain pieces (such as for drilling) will work
-			//if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True)
-			if (newSpace == goalSpace || (goalSpace == null && raider.canPerformTask(newSpace))) {
-				goalSpace = newSpace;
-				newSpace.parents = [currentSpace]; //start the path with currentSpace and work our way back
-				pathsFound = [[newSpace]];
-				
-				//grow out the list of paths back in pathsFound until all valid paths have been exhausted
-				while (pathsFound.length > 0) {
-					if (pathsFound[0][pathsFound[0].length-1].parents[0] == startSpace) { //we've reached the start space, thus completing this path
-						if (!returnAllSolutions) {
-							return pathsFound[0];
-						}
-						finalPathDistance = pathsFound[0].length;
-						solutions.push(pathsFound.shift());
-						continue;
-						
-					}
-					//branch additional paths for each parent of the current path's current space
-					for (var i = 0; i < pathsFound[0][pathsFound[0].length-1].parents.length; i++) {
-						if (i == pathsFound[0][pathsFound[0].length-1].parents.length - 1) {
-							pathsFound[0].push(pathsFound[0][pathsFound[0].length-1].parents[i]);
-						}
-						else {
-							pathsFound.push(pathsFound[0].slice());
-							pathsFound[pathsFound.length-1].push(pathsFound[0][pathsFound[0].length-1].parents[i]);
-						}
-					}
-				}
+			//if the newSpace is a goal, compose the path back to startSpace
+			if (newSpace == goalSpace) {
+				newSpace.parent = currentSpace; //start the path with currentSpace and work our way back
+				return composePath(startSpace, goalSpace);
 			}
 			
 			//attempt to keep branching from newSpace as long as it is a walkable type
-			if ((newSpace != null) && (newSpace.walkable == true)) {					
+			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
 				var newStartDistance = currentSpace.startDistance + 1;
-				var notInOpenSet = openSet.indexOf(newSpace) == -1;
 				
 				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
 				if ((closedSet.indexOf(newSpace) != -1) && (newSpace.startDistance < newStartDistance)) {
 					continue;
 				}
 				
-				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is equal to its existing startDistance
-				if (notInOpenSet || newSpace.startDistance == newStartDistance) { 
-					//only reset parent list if this is the first time we are visiting newSpace
-					if (notInOpenSet) {
-						newSpace.parents = [];
-					}
-					newSpace.parents.push(currentSpace);
+				var notInOpenSet = openSet.indexOf(newSpace) == -1;
+				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
+				if (notInOpenSet || newSpace.startDistance < newStartDistance) { 
+					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
 					//if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
 					if (notInOpenSet) {
@@ -430,7 +412,7 @@ function drawMap() {
  * @param y: the second index representing the desired terrain position
  * @param dir: the direction (up, down, left, or right) of the adjacent container to return
  * @returns an object containing the x,y indicies of the desired container, as well as its type, or null if no such container exists
- * @throws: direction error if dir is not one of the cardinal directions, position error if x,y is not contained in terrain
+ * @throws: direction error if dir is not one of the cardinal directions, position error if final x,y is not contained in terrain
  */
 function adjacentContainer(terrain,x,y,dir) {
 	if (!directions.contains(dir)) {
@@ -458,6 +440,26 @@ function adjacentContainer(terrain,x,y,dir) {
 		}
 	}
 	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
+}
+
+/**
+ * get all adjacent containers to terrain indices x,y
+ * @param terrain: the terrain to check against
+ * @param x: the first index representing the desired terrain position
+ * @param y: the second index representing the desired terrain position
+ * @returns a list of objects containing the x,y indices and type of all valid adjacent containers
+ */
+function adjacentContainers(terrain,x,y) {
+	var newContainers = [];
+	var directionList = [directions.up,directions.left,directions.down,directions.right];
+	for (var i = 0; i < directionList.length; ++i) {
+		var newContainer = adjacentContainer(terrain,x,y,directionList[i]);
+		//make sure the adjacent container existed before trying to push it
+		if (newContainer) {
+			newContainers.push(newContainer);
+		}
+	}
+	return newContainers;
 }
 
 /**
