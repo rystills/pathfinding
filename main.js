@@ -1,4 +1,104 @@
 /**
+ * calculate the shortest path in a terrain from one space to another
+ * @param terrain: the terrain in which to search for a path
+ * @param startSpace: the space on which to begin the search
+ * @param goalSpace: the desired goal space. If null, searches for a task that the input raider can perform instead.
+ * @returns the shortest path from the start space to the goal space
+ */
+function calculatePath(terrain,startSpace,goalSpace) { 
+	//if the start space is the goal space, then the path is just that space
+	if (startSpace == goalSpace) {
+		return [startSpace];
+	}
+	
+	//initialize goal and parent space properties
+	goalSpace.parents = [];	
+	startSpace.parents = [];
+	startSpace.startDistance = 0;
+	
+	//initialize open and closed sets for breadth-first traversal
+	var closedSet = [];
+	var openSet = [startSpace];
+	
+	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
+	while (openSet.length > 0) {	
+		var currentSpace = openSet.shift();
+		closedSet.push(currentSpace);
+		var adjacentSpaces = [];
+		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"up"));
+		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"down"));
+		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"left"));
+		adjacentSpaces.push(adjacentSpace(terrain,currentSpace.listX,currentSpace.listY,"right"));
+		
+		//main inner iteration: check each space in adjacentSpaces for validity
+		for (var k = 0; k < adjacentSpaces.length; k++) {
+			//if returnAllSolutions is True and we have surpassed finalPathDistance, exit immediately
+			if ((finalPathDistance != -1) && (currentSpace.startDistance + 1 > finalPathDistance)) {
+				return solutions;
+			}
+			
+			var newSpace = adjacentSpaces[k];
+			//check this here so that the algorithm is a little bit faster, but also so that paths to non-walkable terrain pieces (such as for drilling) will work
+			//if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True)
+			if (newSpace == goalSpace || (goalSpace == null && raider.canPerformTask(newSpace))) {
+				goalSpace = newSpace;
+				newSpace.parents = [currentSpace]; //start the path with currentSpace and work our way back
+				pathsFound = [[newSpace]];
+				
+				//grow out the list of paths back in pathsFound until all valid paths have been exhausted
+				while (pathsFound.length > 0) {
+					if (pathsFound[0][pathsFound[0].length-1].parents[0] == startSpace) { //we've reached the start space, thus completing this path
+						if (!returnAllSolutions) {
+							return pathsFound[0];
+						}
+						finalPathDistance = pathsFound[0].length;
+						solutions.push(pathsFound.shift());
+						continue;
+						
+					}
+					//branch additional paths for each parent of the current path's current space
+					for (var i = 0; i < pathsFound[0][pathsFound[0].length-1].parents.length; i++) {
+						if (i == pathsFound[0][pathsFound[0].length-1].parents.length - 1) {
+							pathsFound[0].push(pathsFound[0][pathsFound[0].length-1].parents[i]);
+						}
+						else {
+							pathsFound.push(pathsFound[0].slice());
+							pathsFound[pathsFound.length-1].push(pathsFound[0][pathsFound[0].length-1].parents[i]);
+						}
+					}
+				}
+			}
+			
+			//attempt to keep branching from newSpace as long as it is a walkable type
+			if ((newSpace != null) && (newSpace.walkable == true)) {					
+				var newStartDistance = currentSpace.startDistance + 1;
+				var notInOpenSet = openSet.indexOf(newSpace) == -1;
+				
+				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
+				if ((closedSet.indexOf(newSpace) != -1) && (newSpace.startDistance < newStartDistance)) {
+					continue;
+				}
+				
+				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is equal to its existing startDistance
+				if (notInOpenSet || newSpace.startDistance == newStartDistance) { 
+					//only reset parent list if this is the first time we are visiting newSpace
+					if (notInOpenSet) {
+						newSpace.parents = [];
+					}
+					newSpace.parents.push(currentSpace);
+					newSpace.startDistance = newStartDistance;
+					//if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
+					if (notInOpenSet) {
+						openSet.splice(binarySearch(openSet,newSpace,"startDistance",true),0,newSpace);
+					}
+				}
+				
+			}
+		}
+	}
+}
+
+/**
  * clear each canvas to a predetermined fillcolor, preparing it for a fresh render
  */
 function clearScreen() {

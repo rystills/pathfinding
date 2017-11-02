@@ -1,5 +1,5 @@
 /**
- * update the button's state, activating it in the event of a mouse click or keyboard press
+ * update the button's state, activating it in the event of a mouse click
  */
 Button.prototype.update = function() {
 	//check mouse button status
@@ -20,24 +20,13 @@ Button.prototype.update = function() {
 	}
 	
 	this.state = "neutral";
-	if (keyStates[String.fromCharCode(13)]) {
-		this.keyboardPressed = true;
-	}
 	
 	//set state based off of pressed
-	if (this.keyboardPressed || (this.pressed && mousing)) {
+	if (this.pressed && mousing) {
 		this.state = "press";
 	}
 	else if (mousing) {
 		this.state = "hover";
-	}
-	
-	if (!(keyStates[String.fromCharCode(13)])) {
-		if (this.keyboardPressed) {
-			//run our function, optionally passing in our argument if it has been set
-			this.function(this.arg);
-		}
-		this.keyboardPressed = false;
 	}
 
 	//if mouse button is not held down, toggle pressed off
@@ -56,7 +45,7 @@ Button.prototype.update = function() {
 }
 
 /**
- * simple class representing a button which can be pressed via a mouse click or a keyboard key
+ * simple class representing a button which can be pressed via a mouse click
  * @param x: the x position of the button's center
  * @param y: the y position of the button's center
  * @param cnv: the canvas to which the button belongs
@@ -70,8 +59,6 @@ function Button(x,y,cnv, text, fontSize, clickFunc,clickArg) {
 	this.state = "neutral";
 	//whether or not the mouse button is held on us
 	this.pressed = false;
-	//whether or not the keyboard button is held on us
-	this.keyboardPressed = false;
 	//how brightly to blend our image (state dependent)
 	this.blendWhiteness = 0;
 	//button label
