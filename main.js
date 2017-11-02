@@ -39,6 +39,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	
 	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
 	while (openSet.length > 0) {
+		console.log(openSet.length);
 		//grab another space from the open set and push it to the closed set
 		var currentSpace = openSet.shift();
 		closedSet.push(currentSpace);
@@ -77,6 +78,30 @@ function calculatePath(terrain,startSpace,goalSpace) {
 				
 			}
 		}
+	}
+}
+
+/**
+ * locate the start and end blocks and then run calculatePath
+ */
+function findPath() {
+	var startSpace = null;
+	var goalSpace = null;
+	for (var block in blocks) {
+	    if (blocks.hasOwnProperty(block)) {
+	    	//check if we found a start space
+	    	if (blocks[block].type == blockTypes.start) {
+	    		startSpace = blocks[block];
+	    	}
+	    	//check if we found a goal space
+	    	else if (blocks[block].type == blockTypes.goal) {
+	    		goalSpace = blocks[block];
+	    	}
+	    }
+	}
+	//calculate a path assuming we found a user-defined start and end space
+	if (startSpace && goalSpace) {
+		calculatePath(scripts[activeMap.name].map,startSpace,goalSpace);
 	}
 }
 
@@ -618,10 +643,11 @@ function initGlobals() {
 	
 	//global list of UI buttons
 	buttons = [];
-	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap))
-	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode))
-	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance))
-	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType))
+	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap));
+	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode));
+	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance));
+	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType));
+	buttons.push(new Button(10,350,uicnv,"Find Path",24,findPath));
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};

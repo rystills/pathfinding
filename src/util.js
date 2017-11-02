@@ -1,4 +1,75 @@
 /**
+ * find the index at which to insert item x in list a, assuming a is sorted
+ * @param a: the list of elements to search
+ * @param x: the item to be inserted into the list
+ * @param key: the key to apply to list items when determining the insert location
+ * @param leftMost: whether to return the left-most insertion location (true) or the right-most insertion location (false)
+ * @param lo: the lower bound of the search space (inclusive)
+ * @param hi: the upper bound of the search space (exclusive)
+ * @returns some value i such that all e in a[:i] have e <= x, and all e in a[i:] have e > x.
+ * @throws bounds error if lo < 0 or high > a.length
+ */
+function binarySearch(a, x, key, leftMost, lo, hi) {
+	if (lo == null) {
+		lo = 0;
+	}
+	else if (lo < 0) {
+		throw "ERROR: lo must be non-negative";
+	}
+		
+	if (hi == null) {
+		hi = a.length;
+	}
+	else if (hi > a.length) {
+		throw "Error: hi must be <= a.length";
+	}
+	
+	if (leftMost == null) {
+		leftMost = false;
+	}
+	
+	if (key != null) {
+		x = x[key]; 
+	}
+	if (leftMost) {
+		while (lo < hi) {
+			mid = ~~((lo+hi)/2);
+			if (key == null) {
+				value = a[mid];
+			}
+			else {
+				value = a[mid][key]; 
+			}
+			if (x <= value) {
+				hi = mid;
+			}
+			else {
+				lo = mid+1;
+			}
+		}
+	}
+	else {
+		while (lo < hi) {
+			mid = ~~((lo+hi)/2);
+			if (key == null) {
+				value = a[mid];
+			}
+			else {
+				value = a[mid][key]; 
+			}
+			if (x < value) {
+				hi = mid;
+			}
+			else {
+				lo = mid+1;
+			}
+		}
+	}
+	
+	return lo;
+}
+
+/**
  * make the input object a child of the specified parent object
  * @param objectName: the name of the child object being given inheritance
  * @param parentName: the name of the parent object
