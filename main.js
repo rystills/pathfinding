@@ -13,7 +13,8 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	 * @returns an ordered list of spaces which form the final path
 	 */
 	function composePath() {
-		var path = [goalSpace];
+		//path is kept global for visual representation
+		path = [goalSpace];
 		var curSpace = goalSpace;
 		//iterate backwards from goalSpace to startSpace, adding each space to the final path list
 		while (curSpace != startSpace) {
@@ -41,8 +42,8 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	startSpace.parent = null;
 	startSpace.startDistance = 0;
 	
-	//initialize open set for traversal
-	var closedSet = [];
+	//initialize open and closed sets for traversal (closed set is kept global for visual representation)
+	closedSet = [];
 	var openSet = [startSpace];
 	
 	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
@@ -57,7 +58,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 		//main inner iteration: check each space in adjacentSpaces for validity
 		for (var k = 0; k < adjacentSpaces.length; ++k) {	
 			var newSpace = adjacentSpaces[k];
-			//if the newSpace is a goal, compose the path back to startSpace
+			//if the new space is the goal, compose the path back to startSpace
 			if (newSpace.x == goalSpace.x && newSpace.y == goalSpace.y) {
 				goalSpace.parent = currentSpace; //start the path with currentSpace and work our way back
 				return composePath(startSpace, goalSpace);
@@ -92,7 +93,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 					if ((!inOpenSet)) {
 						openSet.splice(binarySearch(openSet,newSpace,"startDistance",true),0,newSpace);
 					}
-					//if newSpace is in the openSet, remove it now
+					//if newSpace is in the closed set, remove it now
 					if (inClosedSet) {
 						closedSet.splice(closedSetIndex,1);
 					}
@@ -101,7 +102,8 @@ function calculatePath(terrain,startSpace,goalSpace) {
 			}
 		}
 	}
-	return null;
+	//no path was found; simply return an empty list
+	return [];
 }
 
 /**
@@ -124,7 +126,7 @@ function findPath() {
 	}
 	//calculate a path assuming we found a user-defined start and end space
 	if (startSpace && goalSpace) {
-		calculatePath(scripts[activeMap.name].map,startSpace,goalSpace);
+		path = calculatePath(scripts[activeMap.name].map,startSpace,goalSpace);
 	}
 }
 
@@ -375,6 +377,27 @@ function drawHUD() {
 }
 
 /**
+ * draw the global path and closedSet
+ */
+function drawPath() {
+	//first draw the closedSet
+	ctx.fillStyle = "rgba(255,255,255,.5)";
+	for (var i = 0; i < closedSet.length; ++i) {
+		ctx.fillRect(closedSet[i].x*tileSize-scrollX+1,closedSet[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
+	}
+	ctx.stroke();
+	ctx.closePath();
+	
+	//now draw the final path
+	ctx.fillStyle = "rgba(0,0,255,.5)";
+	for (var i = 0; i < path.length; ++i) {
+		ctx.fillRect(path[i].x*tileSize-scrollX+1,path[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
+	}
+	ctx.stroke();
+	ctx.closePath();
+}
+
+/**
  * draw the currently active map to the screen
  */
 function drawMap() {
@@ -430,6 +453,9 @@ function drawMap() {
 	}
 	ctx.stroke();
 	ctx.closePath();
+	
+	//draw path and closedSet
+	drawPath();
 	
 	//draw user-added blocks
 	for (var block in blocks) {
@@ -677,6 +703,10 @@ function initGlobals() {
 	
 	//render the map once at game start
 	renderMap();
+	
+	//make pathfinding closedSet and path global so we can display searched blocks after pathfinding
+	closedSet = [];
+	path = [];
 }
 
 //disallow right-click context menu as right click functionality is necessary for block removal
