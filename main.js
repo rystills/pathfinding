@@ -107,6 +107,14 @@ function calculatePath(terrain,startSpace,goalSpace) {
 }
 
 /**
+ * clear the closedSet and path from the last pathfinding run
+ */
+function clearResults() {
+	closedSet = [];
+	path = [];
+}
+
+/**
  * locate the start and end blocks and then run calculatePath
  */
 function findPath() {
@@ -248,6 +256,7 @@ function changeMap() {
 	renderMap();
 	this.text = "Map: " + activeMap.name;
 	clearBlocks();
+	clearResults();
 }
 
 /**
@@ -548,10 +557,8 @@ function containerWalkable(terrain,x,y) {
 	var blockPercentage = 0;
 	for (var i = 0; i < 2; ++i) {
 		for (var r = 0; r < 2; ++r) {
-			if (terrain[y+i][x+r] != '.') {
-				if (++blockPercentage == 2) {
-					return false;
-				}
+			if (terrain[y+i][x+r] != '.' && ++blockPercentage == 2) {
+				return false;
 			}
 		}
 	}
@@ -697,6 +704,7 @@ function initGlobals() {
 	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance));
 	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType));
 	buttons.push(new Button(10,350,uicnv,"Find Path",24,findPath));
+	buttons.push(new Button(10,410,uicnv,"Clear Results",24,clearResults));
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
