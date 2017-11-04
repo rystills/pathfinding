@@ -25,6 +25,16 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	}
 	
 	/**
+	 * calculate the total cost of the active heuristics when applied to the input space
+	 * @param desiredSpace: the space whose heuristic cost we wish to calculate
+	 */
+	function calculateHeuristics(desiredSpace) {
+		//heuristic 1
+		return getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y);
+	}
+	
+	
+	/**
 	 * helper function for calculatePath: compare two space objects' coordinates
 	 * @param other: the other object to check against
 	 */
@@ -89,9 +99,10 @@ function calculatePath(terrain,startSpace,goalSpace) {
 				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
+					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace);
 					//if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
 					if ((!inOpenSet)) {
-						openSet.splice(binarySearch(openSet,newSpace,"startDistance",true),0,newSpace);
+						openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
 					}
 					//if newSpace is in the closed set, remove it now
 					if (inClosedSet) {
