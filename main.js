@@ -258,8 +258,8 @@ function changeMode() {
  */
 function changeHeuristicWeight(heuristicNum) {
 	if (heuristicNum == 1) {
-		heuristic1Weight = heuristic1Weight % 5 + 1;
-		this.text = "Linear Distance: " + heuristic1Weight;
+		heuristic1Weight = (heuristic1Weight + 1) % 5;
+		this.text = "Linear Distance: " + heuristic1Weight + (heuristic1Weight == 0 ? "%" : "00%");
 	}
 }
 
@@ -729,7 +729,7 @@ function initGlobals() {
 	buttons.push(new Button(10,350,uicnv,"Find Path",24,findPath));
 	buttons.push(new Button(10,410,uicnv,"Clear Results",24,clearResults));
 	buttons.push(new Button(10,470,uicnv,"Clear Blocks",24,clearBlocks));
-	buttons.push(new Button(10,590,uicnv,"Linear Distance: 1",24,changeHeuristicWeight,1));
+	buttons.push(new Button(10,570,uicnv,"Linear Distance: 100%",24,changeHeuristicWeight,1));
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
@@ -742,7 +742,7 @@ function initGlobals() {
 	path = [];
 	
 	//store heuristic rates, to be modified by the user if desired
-	heuristic1Weight = 0;
+	heuristic1Weight = 1;
 }
 
 //disallow right-click context menu as right click functionality is necessary for block removal
