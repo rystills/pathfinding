@@ -29,8 +29,8 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	 * @param desiredSpace: the space whose heuristic cost we wish to calculate
 	 */
 	function calculateHeuristics(desiredSpace) {
-		//heuristic 1
-		return getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y);
+		//heuristic 1: linear distance
+		return getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
 	}
 	
 	
@@ -253,6 +253,17 @@ function changeMode() {
 }
 
 /**
+ * update the weight of the specified heuristic number
+ * @param heuristicNum: the number of the heuristic whose weight we wish to change
+ */
+function changeHeuristicWeight(heuristicNum) {
+	if (heuristicNum == 1) {
+		heuristic1Weight = heuristic1Weight % 5 + 1;
+		this.text = "Linear Distance: " + heuristic1Weight;
+	}
+}
+
+/**
  * delete all user-created blocks
  */
 function clearBlocks() {
@@ -394,6 +405,7 @@ function drawHUD() {
 	uictx.fillStyle = "#FFFFFF";
 	uictx.fillText("Scroll: " + scrollX + ", " + scrollY, 10,30);
 	uictx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 10,80);
+	uictx.fillText("Heuristic Weights:",10,550);
 }
 
 /**
@@ -684,7 +696,7 @@ function initGlobals() {
 	
 	//global game settings
 	//tile size describes the size of a single tile (in pixels)
-	tileSize = 16;
+	tileSize = 8;
 	//container size describes how many rows and columns of tiles fit into each container
 	containerSize = 2;
 	//scroll values dictate the current camera scroll (in pixels)
@@ -716,6 +728,8 @@ function initGlobals() {
 	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType));
 	buttons.push(new Button(10,350,uicnv,"Find Path",24,findPath));
 	buttons.push(new Button(10,410,uicnv,"Clear Results",24,clearResults));
+	buttons.push(new Button(10,470,uicnv,"Clear Blocks",24,clearBlocks));
+	buttons.push(new Button(10,590,uicnv,"Linear Distance: 1",24,changeHeuristicWeight,1));
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
@@ -726,6 +740,9 @@ function initGlobals() {
 	//make pathfinding closedSet and path global so we can display searched blocks after pathfinding
 	closedSet = [];
 	path = [];
+	
+	//store heuristic rates, to be modified by the user if desired
+	heuristic1Weight = 0;
 }
 
 //disallow right-click context menu as right click functionality is necessary for block removal
