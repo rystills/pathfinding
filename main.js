@@ -477,7 +477,8 @@ function drawMap() {
 					if (mouseDownLeft) {
 						//don't add start or goal spaces to invalid areas
 						if (activeBlockType == blockTypes.obstacle || containerWalkable(map,r,i)) {
-							addBlock(r,i);	
+							addBlock(r,i);
+							console.log("x: "+r+", y: "+i);
 						}
 					}
 					else if (mouseDownRight) {
