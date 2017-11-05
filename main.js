@@ -7,7 +7,7 @@
  */
 function calculatePath(terrain,startSpace,goalSpace) { 
 	/**
-	 * helper function for calculatePath; composes the final path by tracing through space parents
+	 * helper function for calculatePath: composes the final path by tracing through space parents
 	 * @param startSpace: the starting space for the path
 	 * @param goalSpace: the goal space for the path
 	 * @returns an ordered list of spaces which form the final path
@@ -25,12 +25,23 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	}
 	
 	/**
-	 * calculate the total cost of the active heuristics when applied to the input space
+	 * helper function for calculatePath: calculate the manhattan distance between two spaces
+	 * @param space1: the first space whose coordinates we wish to check
+	 * @param space2: the second space whose coordinates we wish to check
+	 */
+	function manhattanDistance(space1,space2) {
+		return Math.abs(space2.x-space1.x) + Math.abs(space2.y-space1.y);
+	}
+	
+	/**
+	 * helper function for calculatePath: calculate the total cost of the active heuristics when applied to the input space
 	 * @param desiredSpace: the space whose heuristic cost we wish to calculate
 	 */
 	function calculateHeuristics(desiredSpace) {
 		//heuristic 1: linear distance
-		return getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
+		var weight1 = getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
+		var weight2 = manhattanDistance(desiredSpace,goalSpace) * heuristic2Weight;
+		return weight1 + weight2;
 	}
 	
 	
@@ -261,6 +272,10 @@ function changeHeuristicWeight(heuristicNum) {
 		heuristic1Weight = (heuristic1Weight + 1) % 5;
 		this.text = "Linear Distance: " + heuristic1Weight + (heuristic1Weight == 0 ? "%" : "00%");
 	}
+	else if (heuristicNum == 2) {
+		heuristic2Weight = (heuristic2Weight + 1) % 5;
+		this.text = "Manhattan Distance: " + heuristic2Weight + (heuristic2Weight == 0 ? "%" : "00%");
+	}
 }
 
 /**
@@ -404,8 +419,10 @@ function drawHUD() {
 	uictx.font = "24px Arial";
 	uictx.fillStyle = "#FFFFFF";
 	uictx.fillText("Scroll: " + scrollX + ", " + scrollY, 10,30);
-	uictx.fillText("Zoom: " + (tileSize == 16 ? "normal" : (tileSize == 8 ? "small" : "tiny")), 10,80);
-	uictx.fillText("Heuristic Weights:",10,550);
+	uictx.fillText("Zoom: " + (tileSize == 16 ? "large" : (tileSize == 8 ? "normal" : "small")), 10,80);
+	uictx.fillText("Settings:",10,130);
+	uictx.fillText("Actions:",10,410);
+	uictx.fillText("Heuristic Weights:",10,630);
 }
 
 /**
@@ -722,14 +739,15 @@ function initGlobals() {
 	
 	//global list of UI buttons
 	buttons = [];
-	buttons.push(new Button(10,110,uicnv,"Map: hrt201n",24,changeMap));
-	buttons.push(new Button(10,170,uicnv,"Representation: tile          ",24,changeMode));
-	buttons.push(new Button(10,230,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance));
-	buttons.push(new Button(10,290,uicnv,"Block Type: obstacle",24,changeBlockType));
-	buttons.push(new Button(10,350,uicnv,"Find Path",24,findPath));
-	buttons.push(new Button(10,410,uicnv,"Clear Results",24,clearResults));
-	buttons.push(new Button(10,470,uicnv,"Clear Blocks",24,clearBlocks));
-	buttons.push(new Button(10,570,uicnv,"Linear Distance: 100%",24,changeHeuristicWeight,1));
+	buttons.push(new Button(10,150,uicnv,"Map: hrt201n",24,changeMap));
+	buttons.push(new Button(10,210,uicnv,"Representation: tile          ",24,changeMode));
+	buttons.push(new Button(10,270,uicnv,"Show Tiles: Near Mouse",24,changeMaxMouseDistance));
+	buttons.push(new Button(10,330,uicnv,"Block Type: obstacle",24,changeBlockType));
+	buttons.push(new Button(10,430,uicnv,"Find Path",24,findPath));
+	buttons.push(new Button(10,490,uicnv,"Clear Results",24,clearResults));
+	buttons.push(new Button(10,550,uicnv,"Clear Blocks",24,clearBlocks));
+	buttons.push(new Button(10,650,uicnv,"Linear Distance: 100%",24,changeHeuristicWeight,1));
+	buttons.push(new Button(10,710,uicnv,"Manhattan Distance: 100%",24,changeHeuristicWeight,2));
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
@@ -743,6 +761,7 @@ function initGlobals() {
 	
 	//store heuristic rates, to be modified by the user if desired
 	heuristic1Weight = 1;
+	heuristic2Weight = 1;
 }
 
 //disallow right-click context menu as right click functionality is necessary for block removal
