@@ -65,7 +65,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 	
 	//initialize open and closed sets for traversal (closed set is kept global for visual representation)
 	closedSet = [];
-	var openSet = [startSpace];
+	openSet = [startSpace];
 	
 	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
 	while (openSet.length > 0) {
@@ -111,10 +111,11 @@ function calculatePath(terrain,startSpace,goalSpace) {
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
 					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace);
-					//if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
-					if ((!inOpenSet)) {
-						openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
+					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
+					if (inOpenSet) {
+						openSet.splice(openSetIndex,1);
 					}
+					openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
 					//if newSpace is in the closed set, remove it now
 					if (inClosedSet) {
 						closedSet.splice(closedSetIndex,1);
@@ -133,6 +134,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
  */
 function clearResults() {
 	closedSet = [];
+	openSet = [];
 	path = [];
 }
 
@@ -434,8 +436,13 @@ function drawPath() {
 	for (var i = 0; i < closedSet.length; ++i) {
 		ctx.fillRect(closedSet[i].x*tileSize-scrollX+1,closedSet[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
+	//next draw the openSet
+	/**ctx.fillStyle = "rgba(255,255,255,.25)";
+	for (var i = 0; i < openSet.length; ++i) {
+		ctx.fillRect(openSet[i].x*tileSize-scrollX+1,openSet[i].y*tileSize-scrollY	+1,tileSize*containerSize-2,tileSize*containerSize-2);
+	}
 	ctx.stroke();
-	ctx.closePath();
+	ctx.closePath();*/
 	
 	//now draw the final path
 	ctx.fillStyle = "rgba(0,0,255,.5)";
@@ -468,7 +475,10 @@ function drawMap() {
 					hoveringContainer = [r,i];
 					//add a block on left mouse press, and remove a block on right mouse press
 					if (mouseDownLeft) {
-						addBlock(r,i);
+						//don't add start or goal spaces to invalid areas
+						if (activeBlockType == blockTypes.obstacle || containerWalkable(map,r,i)) {
+							addBlock(r,i);	
+						}
 					}
 					else if (mouseDownRight) {
 						removeBlock(r,i);
@@ -755,8 +765,9 @@ function initGlobals() {
 	//render the map once at game start
 	renderMap();
 	
-	//make pathfinding closedSet and path global so we can display searched blocks after pathfinding
+	//make pathfinding sets and path global so we can display searched blocks after pathfinding
 	closedSet = [];
+	openSet = [];
 	path = [];
 	
 	//store heuristic rates, to be modified by the user if desired
