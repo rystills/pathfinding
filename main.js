@@ -27,12 +27,12 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 		
 		//initialize goal and parent space properties
 		goalSpace.parent = null;
-		startSpace.parent = null;
-		startSpace.startDistance = 0;
+		space.parent = null;
+		space.startDistance = 0;
 		
 		//initialize open and closed sets for traversal
 		closedSet = [];
-		openSet = [startSpace];
+		openSet = [space];
 		
 		//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
 		while (openSet.length > 0) {
@@ -58,13 +58,11 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 					var openSetIndex = openSet.findIndex(checkCoords,newSpace);
 					var inOpenSet = openSetIndex!= -1;
 					if (inOpenSet) {
-						console.log('ayy');
 						newSpace = openSet[openSetIndex];
 					}
 					var closedSetIndex = closedSet.findIndex(checkCoords,newSpace);
 					var inClosedSet = closedSetIndex != -1;
 					if (inClosedSet) {
-						console.log('beee');
 						newSpace = closedSet[closedSetIndex];
 					}
 					
@@ -75,7 +73,6 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 
 					//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
 					if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
-						console.log(newStartDistance);
 						newSpace.parent = currentSpace;
 						newSpace.startDistance = newStartDistance;
 						//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
@@ -103,7 +100,9 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	
 	//grab the nearest waypoint to both the start space and the goal space
 	startWaypoint = locateNearestWaypoint(startSpace);
+	var startClosedSet = closedSet;
 	goalWaypoint = locateNearestWaypoint(goalSpace);
+	closedSet = closedSet.concat(startClosedSet);
 	
 	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
 	if (!(startWaypoint && goalWaypoint)) {
