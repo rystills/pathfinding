@@ -319,7 +319,7 @@ function changeMaxMouseDistance() {
  * @returns
  */
 function changeMode() {
-	activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
+	activeMode = (activeMode == modes.tile ? modes.waypoint : modes.tile);
 	this.text = "Representation: " + activeMode.name;
 	clearResults();
 }
@@ -826,7 +826,7 @@ function initGlobals() {
 	maxMouseDistance = 200;
 	
 	//game-modes enum
-	modes = new enums.Enum("tile","waypoint","quadtree");
+	modes = new enums.Enum("tile","waypoint");
 	activeMode = modes.tile;
 	
 	//placeable block types enum
