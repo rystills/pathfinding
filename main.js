@@ -1,9 +1,48 @@
 /**
- * helper function for calculatePath/calculatePathWaypoints: compare two space objects' coordinates
+ * helper function for calculatePath/calculatePathWaypoints: compare two container objects' coordinates
  * @param other: the other object to check against
  */
 function checkCoords(other) {
 	return other.x == this.x && other.y == this.y;
+}
+
+/**
+ * helper function for calculatePath/calculatePathWaypoints: calculate the manhattan distance between two spaces
+ * @param space1: the first space whose coordinates we wish to check
+ * @param space2: the second space whose coordinates we wish to check
+ */
+function manhattanDistance(space1,space2) {
+	return Math.abs(space2.x-space1.x) + Math.abs(space2.y-space1.y);
+}
+
+/**
+ * helper function for calculatePath/calculatePathWaypoints: calculate the total cost of the active heuristics when applied to the input space
+ * @param desiredSpace: the space whose heuristic cost we wish to calculate
+ * @param goalSpace: the space we wish to arrive at
+ */
+function calculateHeuristics(desiredSpace,goalSpace) {
+	//heuristic 1: linear distance
+	var weight1 = getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
+	var weight2 = manhattanDistance(desiredSpace,goalSpace) * heuristic2Weight;
+	return weight1 + weight2;
+}
+
+/**
+ * helper function for calculatePath/calculatePathWaypoints: composes the final path by tracing through space parents
+ * @param startSpace: the starting space for the path
+ * @param goalSpace: the goal space for the path
+ * @returns an ordered list of spaces which form the final path
+ */
+function composePath(startSpace, goalSpace) {
+	//path is kept global for visual representation
+	path = [goalSpace];
+	var curSpace = goalSpace;
+	//iterate backwards from goalSpace to startSpace, adding each space to the final path list
+	while (curSpace != startSpace) {
+		curSpace = curSpace.parent;
+		path.unshift(curSpace);
+	}
+	return path;
 }
 
 /**
@@ -47,7 +86,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 				var newSpace = adjacentSpaces[k];
 				//if the new space is the goal, compose the path back to startSpace
 				if (containerIsWaypoint(newSpace,waypoints)) {
-					return waypoints[newSpace.x+","+newSpace.y];
+					return newSpace;
 				}
 				
 				//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
@@ -109,9 +148,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 		return [];
 	}
 	
-	console.log(startWaypoint);
-	console.log(goalWaypoint);
-	return [];
+	//now that we have the start and goal waypoint containers, we can run a normal A* search on the waypoints
 }
 
 /**
@@ -121,45 +158,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
  * @param goalSpace: the desired goal space
  * @returns the shortest path from the start space to the goal space
  */
-function calculatePath(terrain,startSpace,goalSpace) { 
-	/**
-	 * helper function for calculatePath: composes the final path by tracing through space parents
-	 * @param startSpace: the starting space for the path
-	 * @param goalSpace: the goal space for the path
-	 * @returns an ordered list of spaces which form the final path
-	 */
-	function composePath() {
-		//path is kept global for visual representation
-		path = [goalSpace];
-		var curSpace = goalSpace;
-		//iterate backwards from goalSpace to startSpace, adding each space to the final path list
-		while (curSpace != startSpace) {
-			curSpace = curSpace.parent;
-			path.unshift(curSpace);
-		}
-		return path;
-	}
-	
-	/**
-	 * helper function for calculatePath: calculate the manhattan distance between two spaces
-	 * @param space1: the first space whose coordinates we wish to check
-	 * @param space2: the second space whose coordinates we wish to check
-	 */
-	function manhattanDistance(space1,space2) {
-		return Math.abs(space2.x-space1.x) + Math.abs(space2.y-space1.y);
-	}
-	
-	/**
-	 * helper function for calculatePath: calculate the total cost of the active heuristics when applied to the input space
-	 * @param desiredSpace: the space whose heuristic cost we wish to calculate
-	 */
-	function calculateHeuristics(desiredSpace) {
-		//heuristic 1: linear distance
-		var weight1 = getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
-		var weight2 = manhattanDistance(desiredSpace,goalSpace) * heuristic2Weight;
-		return weight1 + weight2;
-	}
-	
+function calculatePath(terrain,startSpace,goalSpace) { 	
 	//if the start space is the goal space, then the path is just that space
 	if (startSpace == goalSpace) {
 		return [startSpace];
@@ -217,7 +216,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
-					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace);
+					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalSpace);
 					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
 					if (inOpenSet) {
 						openSet.splice(openSetIndex,1);
