@@ -173,14 +173,14 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 		for (var k = 0; k < adjacentSpaces.length; ++k) {	
 			var newSpace = adjacentSpaces[k];
 			//if the new space is the goal, compose the path back to startWaypoint
-			if (newSpace.x == goalSpace.x && newSpace.y == goalSpace.y) {
-				goalSpace.parent = currentSpace; //start the path with currentSpace and work our way back
+			if (newSpace.x == goalWaypoint.x && newSpace.y == goalWaypoint.y) {
+				goalWaypoint.parent = currentSpace; //start the path with currentSpace and work our way back
 				closedSet = closedSet.concat(waypointsClosedSet);
-				return composePath(startWaypoint, goalSpace);
+				return composePath(startWaypoint, goalWaypoint);
 			}
 			
 			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
-			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
+			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {
 				var newStartDistance = currentSpace.startDistance + 1;
 
 				//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
@@ -204,7 +204,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
-					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalSpace);
+					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalWaypoint);
 					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
 					if (inOpenSet) {
 						openSet.splice(openSetIndex,1);
