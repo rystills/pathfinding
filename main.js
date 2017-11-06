@@ -233,12 +233,7 @@ function connectWaypoints() {
 	 * @param container: the container to check
 	 */
 	function containerIsWaypoint(container) {
-		for (var i = 0; i < scripts[mapName].waypoints.length; ++i) {
-			if (scripts[mapName].waypoints[i][0] == container.x && scripts[mapName].waypoints[i][1] == container.y) {
-				return true;
-			}
-		}
-		return false;
+		return (scripts[mapName].waypoints.hasOwnProperty(container.x+","+container.y));
 	}
 	
 	/**
@@ -266,20 +261,22 @@ function connectWaypoints() {
 	var mapName = "arena2";
 	var directionList = [directions.up,directions.left,directions.down,directions.right];
 	for (var i = 0; i < 2; ++i) {
-		for (var r = 0; r < scripts[mapName].waypoints.length; ++r) {
-			//set third index of waypoint array to a new array, and populate it with connections by branching out in all cardinal directions
-			scripts[mapName].waypoints[r][2] = [];
-			for (var j = 0; j < directionList.length; ++j) {
-				try {
-					scripts[mapName].waypoints[r][2] = scripts[mapName].waypoints[r][2].concat(
-							accumulateWaypoints(adjacentContainer(scripts[mapName].map,scripts[mapName].waypoints[r][0],
-									scripts[mapName].waypoints[r][1],directionList[j]),directionList[j]));
+		for (var wp in scripts[mapName].waypoints) {
+		    if (scripts[mapName].waypoints.hasOwnProperty(wp)) {
+		    	var coords = scripts[mapName].waypoints[wp].split(",");
+				//populate array corresponding to waypoint x,y key with connections by branching out in all cardinal directions
+				for (var j = 0; j < directionList.length; ++j) {
+					try {
+						scripts[mapName].waypoints[wp] = scripts[mapName].waypoints[wp].concat(
+								accumulateWaypoints(adjacentContainer(scripts[mapName].map,coords[0],
+										coords[1],directionList[j]),directionList[j]));
+					}
+					catch(err) {
+						//simply proceed to the next direction if no adjacent container exists
+						continue;
+					}
 				}
-				catch(err) {
-					//simply proceed to the next direction if no adjacent container exists
-					continue;
-				}
-			}
+		    }
 		}
 		mapName = "hrt201n";
 	}
@@ -594,27 +591,35 @@ function drawMap() {
 		ctx.closePath();
 	}
 	
-	var waypoints = scripts[activeMap.name].waypoints;
-	//draw waypoint connections as white lines
-	ctx.strokeStyle = "rgba(255,255,255,1)";
-	ctx.lineWidth = tileSize/4;
-	for (var i = 0; i < waypoints.length; ++i) {
-		for (var r = 0; r < waypoints[i][2].length; ++r) {
-			ctx.beginPath();
-			ctx.moveTo(waypoints[i][0]*tileSize-scrollX + tileSize,waypoints[i][1]*tileSize-scrollY + tileSize);
-			ctx.lineTo(waypoints[i][2][r].x*tileSize-scrollX + tileSize,waypoints[i][2][r].y*tileSize-scrollY + tileSize);
-			ctx.stroke();
-			ctx.closePath();
+	if (activeMode == modes.waypoint) {
+		var waypoints = scripts[activeMap.name].waypoints;
+		//draw waypoint connections as white lines
+		ctx.strokeStyle = "rgba(255,255,255,1)";
+		ctx.lineWidth = tileSize/4;
+		for (var wp in waypoints) {
+		    if (waypoints.hasOwnProperty(wp)) {
+		    	var coords = wp.split(",");
+				for (var r = 0; r < waypoints[wp].length; ++r) {
+					ctx.beginPath();
+					ctx.moveTo(coords[0]*tileSize-scrollX + tileSize,coords[1]*tileSize-scrollY + tileSize);
+					ctx.lineTo(waypoints[wp][r].x*tileSize-scrollX + tileSize,waypoints[wp][r].y*tileSize-scrollY + tileSize);
+					ctx.stroke();
+					ctx.closePath();
+				}	
+		    }
 		}
-	}
-	
-	//draw waypoints as blue circles
-	ctx.fillStyle = "rgba(0,0,255,1)";
-	for (var i = 0; i < waypoints.length; ++i) {
-		ctx.beginPath();
-		ctx.arc(waypoints[i][0]*tileSize-scrollX + tileSize, waypoints[i][1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
-		ctx.fill();
-		ctx.closePath();
+		
+		//draw waypoints as blue circles
+		ctx.fillStyle = "rgba(0,0,255,1)";
+		for (var wp in waypoints) {
+		    if (waypoints.hasOwnProperty(wp)) {
+		    	var coords = wp.split(",");
+				ctx.beginPath();
+				ctx.arc(coords[0]*tileSize-scrollX + tileSize, coords[1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+		    }
+		}	
 	}
 }
 
