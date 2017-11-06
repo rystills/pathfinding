@@ -594,16 +594,7 @@ function drawMap() {
 		ctx.closePath();
 	}
 	
-	//draw waypoints as white circles
 	var waypoints = scripts[activeMap.name].waypoints;
-	ctx.fillStyle = "rgba(255,255,255,1)";
-	for (var i = 0; i < waypoints.length; ++i) {
-		ctx.beginPath();
-		ctx.arc(waypoints[i][0]*tileSize-scrollX + tileSize, waypoints[i][1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
-		ctx.fill();
-		ctx.closePath();
-	}
-	
 	//draw waypoint connections as white lines
 	ctx.strokeStyle = "rgba(255,255,255,1)";
 	ctx.lineWidth = tileSize/4;
@@ -615,6 +606,15 @@ function drawMap() {
 			ctx.stroke();
 			ctx.closePath();
 		}
+	}
+	
+	//draw waypoints as blue circles
+	ctx.fillStyle = "rgba(0,0,255,1)";
+	for (var i = 0; i < waypoints.length; ++i) {
+		ctx.beginPath();
+		ctx.arc(waypoints[i][0]*tileSize-scrollX + tileSize, waypoints[i][1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
+		ctx.fill();
+		ctx.closePath();
 	}
 }
 
