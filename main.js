@@ -681,7 +681,8 @@ function drawHUD() {
  */
 function drawPath() {
 	//first draw the closedSet
-	ctx.fillStyle = "rgba(255,255,255,.5)";
+	//ctx.fillStyle = "rgba(255,255,255," + (activeMode == modes.tile ? ".5)" : "1)");
+	ctx.fillStyle = "rgba(255,255,255,1)";
 	for (var i = 0; i < closedSet.length; ++i) {
 		ctx.fillRect(closedSet[i].x*tileSize-scrollX+1,closedSet[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
@@ -693,7 +694,7 @@ function drawPath() {
 //	ctx.closePath();
 	
 	//now draw the final path
-	ctx.fillStyle = "rgba(0,0,255,.5)";
+	ctx.fillStyle = "rgba(0,0,255,1)";
 	for (var i = 0; i < path.length; ++i) {
 		ctx.fillRect(path[i].x*tileSize-scrollX+1,path[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
