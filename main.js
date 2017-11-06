@@ -247,7 +247,6 @@ function connectWaypoints() {
 	 * @param dir: the direction in which to travel
 	 */
 	function accumulateWaypoints(container,dir) {
-		console.log("direction: " + dir.name + ", x: " + container.x + ", y: " + container.y);
 		if (containerWalkable(scripts[mapName].map,container.x,container.y)) {
 			var waypoints = [];
 			if (containerIsWaypoint(container)) {
@@ -273,7 +272,8 @@ function connectWaypoints() {
 			for (var j = 0; j < directionList.length; ++j) {
 				try {
 					scripts[mapName].waypoints[r][2] = scripts[mapName].waypoints[r][2].concat(
-							accumulateWaypoints(adjacentContainer(scripts[mapName].map,scripts[mapName].waypoints[r][0],scripts[mapName].waypoints[r][1],directionList[j]),directionList[j]));
+							accumulateWaypoints(adjacentContainer(scripts[mapName].map,scripts[mapName].waypoints[r][0],
+									scripts[mapName].waypoints[r][1],directionList[j]),directionList[j]));
 				}
 				catch(err) {
 					//simply proceed to the next direction if no adjacent container exists
@@ -503,7 +503,6 @@ function drawPath() {
 	for (var i = 0; i < openSet.length; ++i) {
 		ctx.fillRect(openSet[i].x*tileSize-scrollX+1,openSet[i].y*tileSize-scrollY	+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
-	ctx.stroke();
 	ctx.closePath();*/
 	
 	//now draw the final path
@@ -511,7 +510,6 @@ function drawPath() {
 	for (var i = 0; i < path.length; ++i) {
 		ctx.fillRect(path[i].x*tileSize-scrollX+1,path[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
-	ctx.stroke();
 	ctx.closePath();
 }
 
@@ -540,7 +538,6 @@ function drawMap() {
 						//don't add start or goal spaces to invalid areas
 						if (activeBlockType == blockTypes.obstacle || containerWalkable(map,r,i)) {
 							addBlock(r,i);
-							console.log("x: "+r+", y: "+i);
 						}
 					}
 					else if (mouseDownRight) {
@@ -564,7 +561,6 @@ function drawMap() {
 	for (var i = 0; i < validMouseTiles.length; ++i) {
 		ctx.fillRect(validMouseTiles[i][0]*tileSize-scrollX+1,validMouseTiles[i][1]*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
-	ctx.stroke();
 	ctx.closePath();
 	
 	//draw invalid tiles in red
@@ -573,7 +569,6 @@ function drawMap() {
 	for (var i = 0; i < invalidMouseTiles.length; ++i) {
 		ctx.fillRect(invalidMouseTiles[i][0]*tileSize-scrollX+1,invalidMouseTiles[i][1]*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
-	ctx.stroke();
 	ctx.closePath();
 	
 	//draw path and closedSet
@@ -596,7 +591,6 @@ function drawMap() {
 		ctx.fillStyle = containerWalkable(map,hoveringContainer[0],hoveringContainer[1]) ? "rgba(0,255,0,1)" : "rgba(255,0,0,1)";
 		ctx.beginPath();
 		ctx.fillRect(hoveringContainer[0]*tileSize-scrollX,hoveringContainer[1]*tileSize-scrollY,tileSize*containerSize,tileSize*containerSize);
-		ctx.stroke();
 		ctx.closePath();
 	}
 	
@@ -612,10 +606,11 @@ function drawMap() {
 	
 	//draw waypoint connections as white lines
 	ctx.strokeStyle = "rgba(255,255,255,1)";
+	ctx.lineWidth = tileSize/4;
 	for (var i = 0; i < waypoints.length; ++i) {
 		for (var r = 0; r < waypoints[i][2].length; ++r) {
 			ctx.beginPath();
-			ctx.moveTo(waypoints[i].x*tileSize-scrollX + tileSize,waypoints[i].y*tileSize-scrollY + tileSize);
+			ctx.moveTo(waypoints[i][0]*tileSize-scrollX + tileSize,waypoints[i][1]*tileSize-scrollY + tileSize);
 			ctx.lineTo(waypoints[i][2][r].x*tileSize-scrollX + tileSize,waypoints[i][2][r].y*tileSize-scrollY + tileSize);
 			ctx.stroke();
 			ctx.closePath();
