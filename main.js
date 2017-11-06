@@ -537,6 +537,16 @@ function drawMap() {
 		ctx.stroke();
 		ctx.closePath();
 	}
+	
+	//draw waypoints as white circles
+	var waypoints = scripts[activeMap.name].waypoints;
+	ctx.fillStyle = "rgba(255,255,255,1)";
+	for (var i = 0; i < waypoints.length; ++i) {
+		ctx.beginPath();
+		ctx.arc(waypoints[i][0]*tileSize-scrollX + tileSize, waypoints[i][1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
+		ctx.fill();
+		ctx.closePath();
+	}
 }
 
 /**
