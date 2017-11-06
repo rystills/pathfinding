@@ -142,6 +142,8 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	var startClosedSet = closedSet;
 	goalWaypoint = locateNearestWaypoint(goalSpace);
 	closedSet = closedSet.concat(startClosedSet);
+	//preserve the state of the closedSet so we can combine it all at the end for visual display of pathfinding process
+	var waypointsClosedSet = closedSet;
 	
 	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
 	if (!(startWaypoint && goalWaypoint)) {
@@ -149,6 +151,77 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	}
 	
 	//now that we have the start and goal waypoint containers, we can run a normal A* search on the waypoints
+	//initialize goal and parent space properties
+	goalWaypoint.parent = null;
+	startWaypoint.parent = null;
+	startWaypoint.startDistance = 0;
+	
+	//initialize open and closed sets for traversal (closed set is kept global for visual representation)
+	closedSet = [];
+	openSet = [startWaypoint];
+	
+	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
+	while (openSet.length > 0) {
+		//grab another space from the open set and push it to the closed set
+		var currentSpace = openSet.shift();
+		closedSet.push(currentSpace);
+		
+		//gather a list of adjacent spaces
+		var adjacentSpaces = adjacentWaypoints(waypoints,currentSpace.x,currentSpace.y);
+		
+		//main inner iteration: check each space in adjacentSpaces for validity
+		for (var k = 0; k < adjacentSpaces.length; ++k) {	
+			var newSpace = adjacentSpaces[k];
+			//if the new space is the goal, compose the path back to startWaypoint
+			if (newSpace.x == goalSpace.x && newSpace.y == goalSpace.y) {
+				goalSpace.parent = currentSpace; //start the path with currentSpace and work our way back
+				closedSet = closedSet.concat(waypointsClosedSet);
+				return composePath(startWaypoint, goalSpace);
+			}
+			
+			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
+			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
+				var newStartDistance = currentSpace.startDistance + 1;
+
+				//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
+				var openSetIndex = openSet.findIndex(checkCoords,newSpace);
+				var inOpenSet = openSetIndex!= -1;
+				if (inOpenSet) {
+					newSpace = openSet[openSetIndex];
+				}
+				var closedSetIndex = closedSet.findIndex(checkCoords,newSpace);
+				var inClosedSet = closedSetIndex != -1;
+				if (inClosedSet) {
+					newSpace = closedSet[closedSetIndex];
+				}
+				
+				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
+				if (inClosedSet && (newSpace.startDistance <= newStartDistance)) {
+					continue;
+				}
+
+				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
+				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
+					newSpace.parent = currentSpace;
+					newSpace.startDistance = newStartDistance;
+					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalSpace);
+					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
+					if (inOpenSet) {
+						openSet.splice(openSetIndex,1);
+					}
+					openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
+					//if newSpace is in the closed set, remove it now
+					if (inClosedSet) {
+						closedSet.splice(closedSetIndex,1);
+					}
+				}
+				
+			}
+		}
+	}
+	closedSet = closedSet.concat(waypointsClosedSet);
+	//no path was found; simply return an empty list
+	return [];
 }
 
 /**
@@ -775,6 +848,23 @@ function adjacentContainer(terrain,x,y,dir) {
 	}
 	throw "ERROR: no block adjacent to position '" + x + ", " + "'" + y + "' in direction '" + dir.name + "' exists in specified terrain";
 }
+
+/**
+ * get all adjacent waypoints to terrain indices x,y
+ * @param terrain: the terrain to check against
+ * @param x: the first index representing the desired terrain position
+ * @param y: the second index representing the desired terrain position
+ * @returns a list of objects containing the x,y indices and type of all valid adjacent containers
+ */
+function adjacentWaypoints(waypoints,x,y) {
+	if (!containerIsWaypoint({"x":x,"y":y},waypoints)) {
+		console.log(waypoints);
+		throw "ERROR: no waypoint found at location '" + x + "', '" + y + "'";
+	}
+	
+	return waypoints[x+","+y];
+}
+
 
 /**
  * get all adjacent containers to terrain indices x,y
