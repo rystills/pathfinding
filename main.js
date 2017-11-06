@@ -225,6 +225,68 @@ function checkChangeZoom() {
 }
 
 /**
+ * add connections between all waypoints which lie directly on one axis from each other, with no obstacles in-between
+ */
+function connectWaypoints() {
+	/**
+	 * helper method for connectWaypoints: check whether or not the specified container is a waypoint
+	 * @param container: the container to check
+	 */
+	function containerIsWaypoint(container) {
+		for (var i = 0; i < scripts[mapName].waypoints.length; ++i) {
+			if (scripts[mapName].waypoints[i][0] == container.x && scripts[mapName].waypoints[i][1] == container.y) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * helper method for connectWaypoints: find all waypoints from container moving in direction dir until a wall is hit
+	 * @param container: the current container
+	 * @param dir: the direction in which to travel
+	 */
+	function accumulateWaypoints(container,dir) {
+		console.log("direction: " + dir.name + ", x: " + container.x + ", y: " + container.y);
+		if (containerWalkable(scripts[mapName].map,container.x,container.y)) {
+			var waypoints = [];
+			if (containerIsWaypoint(container)) {
+				waypoints = [container];
+			}
+			try {
+				return waypoints.concat(accumulateWaypoints(adjacentContainer(scripts[mapName].map,container.x,container.y,dir),dir));	
+			}
+			catch(err) {
+				//return immediately if no adjacent container exists
+				return waypoints;
+			}
+		}
+		return [];
+	}
+	
+	var mapName = "arena2";
+	var directionList = [directions.up,directions.left,directions.down,directions.right];
+	for (var i = 0; i < 2; ++i) {
+		for (var r = 0; r < scripts[mapName].waypoints.length; ++r) {
+			//set third index of waypoint array to a new array, and populate it with connections by branching out in all cardinal directions
+			scripts[mapName].waypoints[r][2] = [];
+			for (var j = 0; j < directionList.length; ++j) {
+				try {
+					scripts[mapName].waypoints[r][2] = scripts[mapName].waypoints[r][2].concat(
+							accumulateWaypoints(adjacentContainer(scripts[mapName].map,scripts[mapName].waypoints[r][0],scripts[mapName].waypoints[r][1],directionList[j]),directionList[j]));
+				}
+				catch(err) {
+					//simply proceed to the next direction if no adjacent container exists
+					continue;
+				}
+			}
+		}
+		mapName = "hrt201n";
+	}
+	
+}
+
+/**
  * render the entire map to a canvas at the desired zoom level
  */
 function renderMap() {
@@ -547,6 +609,18 @@ function drawMap() {
 		ctx.fill();
 		ctx.closePath();
 	}
+	
+	//draw waypoint connections as white lines
+	ctx.strokeStyle = "rgba(255,255,255,1)";
+	for (var i = 0; i < waypoints.length; ++i) {
+		for (var r = 0; r < waypoints[i][2].length; ++r) {
+			ctx.beginPath();
+			ctx.moveTo(waypoints[i].x*tileSize-scrollX + tileSize,waypoints[i].y*tileSize-scrollY + tileSize);
+			ctx.lineTo(waypoints[i][2][r].x*tileSize-scrollX + tileSize,waypoints[i][2][r].y*tileSize-scrollY + tileSize);
+			ctx.stroke();
+			ctx.closePath();
+		}
+	}
 }
 
 /**
@@ -583,7 +657,7 @@ function adjacentContainer(terrain,x,y,dir) {
 			return {"x":x+containerSize,"y":y};
 		}
 	}
-	throw "ERROR: position '" + x + ", " + "y' does not exist in specified terrain";
+	throw "ERROR: no block adjacent to position '" + x + ", " + "'" + y + "' in direction '" + dir.name + "' exists in specified terrain";
 }
 
 /**
@@ -597,10 +671,12 @@ function adjacentContainers(terrain,x,y) {
 	var newContainers = [];
 	var directionList = [directions.up,directions.left,directions.down,directions.right];
 	for (var i = 0; i < directionList.length; ++i) {
-		var newContainer = adjacentContainer(terrain,x,y,directionList[i]);
-		//make sure the adjacent container existed before trying to push it
-		if (newContainer) {
-			newContainers.push(newContainer);
+		try {
+			newContainers.push(adjacentContainer(terrain,x,y,directionList[i]));	
+		}
+		//continue gracefully if an adjacent block did not exist in the specified direction
+		catch(err) {
+			continue;
 		}
 	}
 	return newContainers;
@@ -772,6 +848,9 @@ function initGlobals() {
 	
 	//object containing hashed block locations in form x,y
 	blocks = {};
+	
+	//add connections between waypoints once at game start
+	connectWaypoints();
 	
 	//render the map once at game start
 	renderMap();
