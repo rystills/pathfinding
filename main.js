@@ -321,6 +321,7 @@ function changeMaxMouseDistance() {
 function changeMode() {
 	activeMode = (activeMode == modes.tile ? modes.waypoint : (activeMode == modes.waypoint ? modes.quadtree : modes.tile));
 	this.text = "Representation: " + activeMode.name;
+	this.clearResults();
 }
 
 /**
