@@ -86,6 +86,8 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 				var newSpace = adjacentSpaces[k];
 				//if the new space is the goal, compose the path back to startSpace
 				if (containerIsWaypoint(newSpace,waypoints)) {
+					newSpace.parent = currentSpace;
+					path = composePath(space,newSpace);
 					return newSpace;
 				}
 				
@@ -132,6 +134,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 		return null;
 	}
 	
+	path = [];
 	//if the start space is the goal space, then the path is just that space
 	if (startSpace == goalSpace) {
 		return [startSpace];
@@ -140,10 +143,12 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	//grab the nearest waypoint to both the start space and the goal space
 	startWaypoint = locateNearestWaypoint(startSpace);
 	var startClosedSet = closedSet;
+	var startPath = path;
 	goalWaypoint = locateNearestWaypoint(goalSpace);
 	closedSet = closedSet.concat(startClosedSet);
-	//preserve the state of the closedSet so we can combine it all at the end for visual display of pathfinding process
+	//preserve the state of the closedSet and path so we can combine it all at the end for visual display of pathfinding process
 	var waypointsClosedSet = closedSet;
+	var waypointsPath = path.concat(startPath);
 	
 	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
 	if (!(startWaypoint && goalWaypoint)) {
@@ -176,7 +181,7 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 			if (newSpace.x == goalWaypoint.x && newSpace.y == goalWaypoint.y) {
 				goalWaypoint.parent = currentSpace; //start the path with currentSpace and work our way back
 				closedSet = closedSet.concat(waypointsClosedSet);
-				return composePath(startWaypoint, goalWaypoint);
+				return composePath(startWaypoint, goalWaypoint).concat(waypointsPath);
 			}
 			
 			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
