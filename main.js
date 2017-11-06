@@ -1,5 +1,122 @@
 /**
- * calculate the shortest path in a terrain from one space to another
+ * helper function for calculatePath/calculatePathWaypoints: compare two space objects' coordinates
+ * @param other: the other object to check against
+ */
+function checkCoords(other) {
+	return other.x == this.x && other.y == this.y;
+}
+
+/**
+ * calculate the shortest path in a terrain from one space to another, utilizing waypoints to speed up the search
+ * @param terrain: the terrain in which to search for a path
+ * @param waypoints: the waypoints to assist in our search for a path
+ * @param startSpace: the space on which to begin the search
+ * @param goalSpace: the desired goal space
+ * @returns the shortest path from the start space to the goal space
+ */
+function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
+	/**
+	 * helper method for calculatePathWaypoints: locate the closest waypoint to the specified container (essentially a bfs version of calculatePath)
+	 * @param space: the container from which to locate the nearest waypoint
+	 */
+	function locateNearestWaypoint(space) {
+		//base case: nothing more to do if we are already on a waypoint	
+		if (containerIsWaypoint(space,waypoints)) {
+			return waypoints[space.x+","+space.y];
+		}
+		
+		//initialize goal and parent space properties
+		goalSpace.parent = null;
+		startSpace.parent = null;
+		startSpace.startDistance = 0;
+		
+		//initialize open and closed sets for traversal
+		closedSet = [];
+		openSet = [startSpace];
+		
+		//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
+		while (openSet.length > 0) {
+			//grab another space from the open set and push it to the closed set
+			var currentSpace = openSet.shift();
+			closedSet.push(currentSpace);
+			//gather a list of adjacent spaces
+			var adjacentSpaces = adjacentContainers(terrain,currentSpace.x,currentSpace.y);
+			
+			//main inner iteration: check each space in adjacentSpaces for validity
+			for (var k = 0; k < adjacentSpaces.length; ++k) {	
+				var newSpace = adjacentSpaces[k];
+				//if the new space is the goal, compose the path back to startSpace
+				if (containerIsWaypoint(newSpace,waypoints)) {
+					return waypoints[newSpace.x+","+newSpace.y];
+				}
+				
+				//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
+				if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
+					var newStartDistance = currentSpace.startDistance + 1;
+
+					//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
+					var openSetIndex = openSet.findIndex(checkCoords,newSpace);
+					var inOpenSet = openSetIndex!= -1;
+					if (inOpenSet) {
+						console.log('ayy');
+						newSpace = openSet[openSetIndex];
+					}
+					var closedSetIndex = closedSet.findIndex(checkCoords,newSpace);
+					var inClosedSet = closedSetIndex != -1;
+					if (inClosedSet) {
+						console.log('beee');
+						newSpace = closedSet[closedSetIndex];
+					}
+					
+					//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
+					if (inClosedSet && (newSpace.startDistance <= newStartDistance)) {
+						continue;
+					}
+
+					//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
+					if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
+						console.log(newStartDistance);
+						newSpace.parent = currentSpace;
+						newSpace.startDistance = newStartDistance;
+						//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
+						if (inOpenSet) {
+							openSet.splice(openSetIndex,1);
+						}
+						openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
+						//if newSpace is in the closed set, remove it now
+						if (inClosedSet) {
+							closedSet.splice(closedSetIndex,1);
+						}
+					}
+					
+				}
+			}
+		}
+		//if we reach this point, then no waypoint was reachable from the specified container
+		return null;
+	}
+	
+	//if the start space is the goal space, then the path is just that space
+	if (startSpace == goalSpace) {
+		return [startSpace];
+	}
+	
+	//grab the nearest waypoint to both the start space and the goal space
+	startWaypoint = locateNearestWaypoint(startSpace);
+	goalWaypoint = locateNearestWaypoint(goalSpace);
+	
+	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
+	if (!(startWaypoint && goalWaypoint)) {
+		return [];
+	}
+	
+	console.log(startWaypoint);
+	console.log(goalWaypoint);
+	return [];
+}
+
+/**
+ * calculate the shortest path in a terrain from one space to another, utilizing only tiles
  * @param terrain: the terrain in which to search for a path
  * @param startSpace: the space on which to begin the search
  * @param goalSpace: the desired goal space
@@ -42,15 +159,6 @@ function calculatePath(terrain,startSpace,goalSpace) {
 		var weight1 = getDistance(desiredSpace.x,desiredSpace.y, goalSpace.x,goalSpace.y) * heuristic1Weight;
 		var weight2 = manhattanDistance(desiredSpace,goalSpace) * heuristic2Weight;
 		return weight1 + weight2;
-	}
-	
-	
-	/**
-	 * helper function for calculatePath: compare two space objects' coordinates
-	 * @param other: the other object to check against
-	 */
-	function checkCoords(other) {
-		return other.x == this.x && other.y == this.y;
 	}
 	
 	//if the start space is the goal space, then the path is just that space
@@ -158,7 +266,12 @@ function findPath() {
 	}
 	//calculate a path assuming we found a user-defined start and end space
 	if (startSpace && goalSpace) {
-		path = calculatePath(scripts[activeMap.name].map,startSpace,goalSpace);
+		if (activeMode == modes.tile) {
+			path = calculatePath(scripts[activeMap.name].map,startSpace,goalSpace);	
+		}
+		else {
+			path = calculatePathWaypoints(scripts[activeMap.name].map,scripts[activeMap.name].waypoints,startSpace,goalSpace);
+		}
 	}
 }
 
@@ -225,17 +338,18 @@ function checkChangeZoom() {
 }
 
 /**
+ * Check whether or not the specified container is a waypoint
+ * @param waypoints: list of waypoints to check in
+ * @param container: the container to check for
+ */
+function containerIsWaypoint(container, waypoints) {
+	return (waypoints.hasOwnProperty(container.x+","+container.y));
+}
+
+/**
  * add connections between all waypoints which lie directly on one axis from each other, with no obstacles in-between
  */
-function connectWaypoints() {
-	/**
-	 * helper method for connectWaypoints: check whether or not the specified container is a waypoint
-	 * @param container: the container to check
-	 */
-	function containerIsWaypoint(container) {
-		return (scripts[mapName].waypoints.hasOwnProperty(container.x+","+container.y));
-	}
-	
+function connectWaypoints() {	
 	/**
 	 * helper method for connectWaypoints: find all waypoints from container moving in direction dir until a wall is hit
 	 * @param container: the current container
@@ -243,7 +357,7 @@ function connectWaypoints() {
 	 */
 	function accumulateWaypoints(container,dir) {
 		if (containerWalkable(scripts[mapName].map,container.x,container.y)) {
-			if (containerIsWaypoint(container)) {
+			if (containerIsWaypoint(container, scripts[mapName].waypoints)) {
 				return [container];
 			}
 			try {
@@ -496,11 +610,11 @@ function drawPath() {
 		ctx.fillRect(closedSet[i].x*tileSize-scrollX+1,closedSet[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
 	//next draw the openSet
-	/**ctx.fillStyle = "rgba(255,255,255,.25)";
-	for (var i = 0; i < openSet.length; ++i) {
-		ctx.fillRect(openSet[i].x*tileSize-scrollX+1,openSet[i].y*tileSize-scrollY	+1,tileSize*containerSize-2,tileSize*containerSize-2);
-	}
-	ctx.closePath();*/
+//	ctx.fillStyle = "rgba(255,255,255,.5)";
+//	for (var i = 0; i < openSet.length; ++i) {
+//		ctx.fillRect(openSet[i].x*tileSize-scrollX+1,openSet[i].y*tileSize-scrollY	+1,tileSize*containerSize-2,tileSize*containerSize-2);
+//	}
+//	ctx.closePath();
 	
 	//now draw the final path
 	ctx.fillStyle = "rgba(0,0,255,.5)";
@@ -535,7 +649,6 @@ function drawMap() {
 						//don't add start or goal spaces to invalid areas
 						if (activeBlockType == blockTypes.obstacle || containerWalkable(map,r,i)) {
 							addBlock(r,i);
-							console.log(r+","+i);
 						}
 					}
 					else if (mouseDownRight) {
