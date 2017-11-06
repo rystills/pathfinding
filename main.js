@@ -243,16 +243,14 @@ function connectWaypoints() {
 	 */
 	function accumulateWaypoints(container,dir) {
 		if (containerWalkable(scripts[mapName].map,container.x,container.y)) {
-			var waypoints = [];
 			if (containerIsWaypoint(container)) {
-				waypoints = [container];
+				return [container];
 			}
 			try {
-				return waypoints.concat(accumulateWaypoints(adjacentContainer(scripts[mapName].map,container.x,container.y,dir),dir));	
+				return accumulateWaypoints(adjacentContainer(scripts[mapName].map,container.x,container.y,dir),dir);
 			}
 			catch(err) {
 				//return immediately if no adjacent container exists
-				return waypoints;
 			}
 		}
 		return [];
@@ -536,6 +534,7 @@ function drawMap() {
 						//don't add start or goal spaces to invalid areas
 						if (activeBlockType == blockTypes.obstacle || containerWalkable(map,r,i)) {
 							addBlock(r,i);
+							console.log(r+","+i);
 						}
 					}
 					else if (mouseDownRight) {
