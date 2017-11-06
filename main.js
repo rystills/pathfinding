@@ -265,7 +265,7 @@ function connectWaypoints() {
 		    if (scripts[mapName].waypoints.hasOwnProperty(wp)) {
 		    	var coords = wp.split(",");
 		    	coords[0] = parseInt(coords[0],10);
-		    	coords[1] = parseInt(coords[0],10);
+		    	coords[1] = parseInt(coords[1],10);
 				//populate array corresponding to waypoint x,y key with connections by branching out in all cardinal directions
 				for (var j = 0; j < directionList.length; ++j) {
 					try {
@@ -601,7 +601,7 @@ function drawMap() {
 		    if (waypoints.hasOwnProperty(wp)) {
 		    	var coords = wp.split(",");
 		    	coords[0] = parseInt(coords[0],10);
-		    	coords[1] = parseInt(coords[0],10);
+		    	coords[1] = parseInt(coords[1],10);
 				for (var r = 0; r < waypoints[wp].length; ++r) {
 					ctx.beginPath();
 					ctx.moveTo(coords[0]*tileSize-scrollX + tileSize,coords[1]*tileSize-scrollY + tileSize);
@@ -618,7 +618,7 @@ function drawMap() {
 		    if (waypoints.hasOwnProperty(wp)) {
 		    	var coords = wp.split(",");
 		    	coords[0] = parseInt(coords[0],10);
-		    	coords[1] = parseInt(coords[0],10);
+		    	coords[1] = parseInt(coords[1],10);
 				ctx.beginPath();
 				ctx.arc(coords[0]*tileSize-scrollX + tileSize, coords[1]*tileSize-scrollY + tileSize, tileSize/2, 0, 2 * Math.PI, false);
 				ctx.fill();
