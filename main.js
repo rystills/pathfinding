@@ -61,7 +61,8 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	function locateNearestWaypoint(space) {
 		//base case: nothing more to do if we are already on a waypoint	
 		if (containerIsWaypoint(space,waypoints)) {
-			return waypoints[space.x+","+space.y];
+			path = [space];
+			return space;
 		}
 		
 		//initialize goal and parent space properties

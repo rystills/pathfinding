@@ -1,5 +1,5 @@
 # pathfinding  
-JavaScript implementation of Game AI Homework #4, involving A* pathfinding with grids and waypoints  
+JavaScript implementation of Game AI Homework #5, involving A* pathfinding with grids and waypoints  
   
 Controls:  
 -1,2, and 3 to toggle between normal, small, and tiny zoom sizes respectively  
