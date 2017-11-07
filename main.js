@@ -802,6 +802,21 @@ function drawMap() {
 		    }
 		}
 		
+		//draw solid blue lines for waypoint connections that are part of the path
+		ctx.strokeStyle = "rgba(0,0,255,1)";
+		ctx.lineWidth = tileSize/2;
+		for (var i = 0; i < path.length; ++i) {
+			if (waypoints.hasOwnProperty(path[i].x+","+path[i].y)) {
+				if (path[i].parent && waypoints.hasOwnProperty(path[i].parent.x + "," + path[i].parent.y)) {
+					ctx.beginPath();
+					ctx.moveTo(path[i].x*tileSize-scrollX + tileSize,path[i].y*tileSize-scrollY + tileSize);
+					ctx.lineTo(path[i].parent.x*tileSize-scrollX + tileSize,path[i].parent.y*tileSize-scrollY + tileSize);
+					ctx.stroke();
+					ctx.closePath();	
+				}
+			}
+		}
+		
 		//draw waypoints as blue circles
 		ctx.fillStyle = "rgba(0,0,255,1)";
 		for (var wp in waypoints) {
