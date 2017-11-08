@@ -72,94 +72,23 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	}
 	
 	//grab the nearest waypoint to both the start space and the goal space
-	startWaypoint = calculatePath(scripts[activeMap.name].map, startSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, false).last();
+	startWaypoint = calculatePath(scripts[activeMap.name].map, startSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
 	var startClosedSet = closedSet;
 	var startPath = path;
 	
-	goalWaypoint = calculatePath(scripts[activeMap.name].map, goalSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, false).last();
+	goalWaypoint = calculatePath(scripts[activeMap.name].map, goalSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
 	
 	console.log(startWaypoint);
 	//preserve the state of the closedSet and path so we can combine it all at the end for visual display of pathfinding process
 	var waypointsClosedSet = closedSet.concat(startClosedSet);
 	var waypointsPath = path.concat(startPath);
 	
-	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
-	if (!(startWaypoint && goalWaypoint)) {
-		return [];
-	}
+	var finalPath = calculatePath(scripts[activeMap.name].waypoints, startWaypoint, goalWaypoint, compareCoords, adjacentWaypoints, function() {return true}, true);
 	
-	//now that we have the start and goal waypoint containers, we can run a normal A* search on the waypoints
-	//initialize goal and parent space properties
-	goalWaypoint.parent = null;
-	startWaypoint.parent = null;
-	startWaypoint.startDistance = 0;
-	
-	//initialize open and closed sets for traversal (closed set is kept global for visual representation)
-	closedSet = [];
-	openSet = [startWaypoint];
-	
-	//main iteration: keep popping spaces from the back until we have found a solution or openSet is empty (no path found)
-	while (openSet.length > 0) {
-		//grab another space from the open set and push it to the closed set
-		var currentSpace = openSet.shift();
-		closedSet.push(currentSpace);
-		
-		//gather a list of adjacent spaces
-		var adjacentSpaces = adjacentWaypoints(waypoints,currentSpace.x,currentSpace.y);
-		
-		//main inner iteration: check each space in adjacentSpaces for validity
-		for (var k = 0; k < adjacentSpaces.length; ++k) {	
-			var newSpace = adjacentSpaces[k];
-			//if the new space is the goal, compose the path back to startWaypoint
-			if (newSpace.x == goalWaypoint.x && newSpace.y == goalWaypoint.y) {
-				goalWaypoint.parent = currentSpace; //start the path with currentSpace and work our way back
-				closedSet = closedSet.concat(waypointsClosedSet);
-				return composePath(startWaypoint, goalWaypoint).concat(waypointsPath);
-			}
-			
-			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
-			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {
-				var newStartDistance = currentSpace.startDistance + 1;
-
-				//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
-				var openSetIndex = openSet.findIndex(checkCoords,newSpace);
-				var inOpenSet = openSetIndex!= -1;
-				if (inOpenSet) {
-					newSpace = openSet[openSetIndex];
-				}
-				var closedSetIndex = closedSet.findIndex(checkCoords,newSpace);
-				var inClosedSet = closedSetIndex != -1;
-				if (inClosedSet) {
-					newSpace = closedSet[closedSetIndex];
-				}
-				
-				//don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
-				if (inClosedSet && (newSpace.startDistance <= newStartDistance)) {
-					continue;
-				}
-
-				//accept newSpace if newSpace has not yet been visited or its new distance from the start space is less than its existing startDistance
-				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
-					newSpace.parent = currentSpace;
-					newSpace.startDistance = newStartDistance;
-					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalWaypoint);
-					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
-					if (inOpenSet) {
-						openSet.splice(openSetIndex,1);
-					}
-					openSet.splice(binarySearch(openSet,newSpace,"totalCost",true),0,newSpace);
-					//if newSpace is in the closed set, remove it now
-					if (inClosedSet) {
-						closedSet.splice(closedSetIndex,1);
-					}
-				}
-				
-			}
-		}
-	}
+	//finally, concatenate the closedSet and path once more so we retain the nodes explored during waypoint discovery
 	closedSet = closedSet.concat(waypointsClosedSet);
-	//no path was found; simply return an empty list
-	return [];
+	path = path.concat(waypointsPath);
+	return finalPath;
 }
 
 /**
@@ -168,10 +97,12 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
  * @param startSpace: the space on which to begin the search
  * @param goalSpace: the desired goal space
  * @param goalCondition: the condition for reaching the goal
+ * @param adjacentSpacesMethod: method to call to retrieve the adjacent spaces
+ * @param validityCondition: condition which determines the validity of a space
  * @param useHeuristics: whether to utilize the current global heuristic settings (true) or simply do a bfs (false)
  * @returns the shortest path from the start space to the goal space
  */
-function calculatePath(terrain,startSpace,goalSpace, goalCondition, useHeuristics) { 	
+function calculatePath(terrain,startSpace,goalSpace, goalCondition, adjacentSpacesMethod, validityCondition, useHeuristics) { 	
 	//if the start space is the goal space, then the path is just that space
 	if (goalCondition(startSpace,goalSpace)) {
 		return [startSpace];
@@ -192,7 +123,7 @@ function calculatePath(terrain,startSpace,goalSpace, goalCondition, useHeuristic
 		closedSet.push(currentSpace);
 		
 		//gather a list of adjacent spaces
-		var adjacentSpaces = adjacentContainers(terrain,currentSpace.x,currentSpace.y);
+		var adjacentSpaces = adjacentSpacesMethod(terrain,currentSpace.x,currentSpace.y);
 		
 		//main inner iteration: check each space in adjacentSpaces for validity
 		for (var k = 0; k < adjacentSpaces.length; ++k) {	
@@ -204,7 +135,7 @@ function calculatePath(terrain,startSpace,goalSpace, goalCondition, useHeuristic
 			}
 			
 			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
-			if (containerWalkable(terrain, newSpace.x,newSpace.y)) {				
+			if (validityCondition(terrain, newSpace.x,newSpace.y)) {				
 				var newStartDistance = currentSpace.startDistance + 1;
 
 				//if newSpace already exists in either the open set or the closed set, grab it now so we maintain startDistance
@@ -277,7 +208,7 @@ function findPath() {
 	//calculate a path assuming we found a user-defined start and end space
 	if (startSpace && goalSpace) {
 		if (activeMode == modes.tile) {
-			path = calculatePath(scripts[activeMap.name].map,startSpace,goalSpace, compareCoords, true);	
+			path = calculatePath(scripts[activeMap.name].map,startSpace,goalSpace, compareCoords, adjacentContainers, containerWalkable, true);	
 		}
 		else {
 			path = calculatePathWaypoints(scripts[activeMap.name].map,scripts[activeMap.name].waypoints,startSpace,goalSpace);
