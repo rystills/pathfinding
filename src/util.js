@@ -80,6 +80,15 @@ function makeChild(objectName, parentName) {
 }
 
 /**
+ * add a 'last' method to arrays for simple retrieval of the last element in an array
+ */
+if (!Array.prototype.last) {
+    Array.prototype.last = function() {
+        return this[this.length - 1];
+    };
+};
+
+/**
  * get the angle between two points
  * @param x1: the x coordinate of the first point
  * @param y1: the y coordinate of the first point
