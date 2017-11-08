@@ -145,10 +145,10 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	startWaypoint = locateNearestWaypoint(startSpace);
 	var startClosedSet = closedSet;
 	var startPath = path;
+	
 	goalWaypoint = locateNearestWaypoint(goalSpace);
-	closedSet = closedSet.concat(startClosedSet);
 	//preserve the state of the closedSet and path so we can combine it all at the end for visual display of pathfinding process
-	var waypointsClosedSet = closedSet;
+	var waypointsClosedSet = closedSet.concat(startClosedSet);
 	var waypointsPath = path.concat(startPath);
 	
 	 //if somehow no waypoint was reachable from either the start or goal node, there's nothing more we can do
@@ -235,16 +235,17 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
  * @param terrain: the terrain in which to search for a path
  * @param startSpace: the space on which to begin the search
  * @param goalSpace: the desired goal space
+ * @param goalCondition: the condition for reaching the goal
+ * @param useHeuristics: whether to utilize the current global heuristic settings (true) or simply do a bfs (false)
  * @returns the shortest path from the start space to the goal space
  */
-function calculatePath(terrain,startSpace,goalSpace) { 	
+function calculatePath(terrain,startSpace,goalSpace, goalCondition, useHeuristics) { 	
 	//if the start space is the goal space, then the path is just that space
-	if (startSpace == goalSpace) {
+	if (goalCondition(startSpace,goalSpace)) {
 		return [startSpace];
 	}
 	
 	//initialize goal and parent space properties
-	goalSpace.parent = null;
 	startSpace.parent = null;
 	startSpace.startDistance = 0;
 	
@@ -265,9 +266,9 @@ function calculatePath(terrain,startSpace,goalSpace) {
 		for (var k = 0; k < adjacentSpaces.length; ++k) {	
 			var newSpace = adjacentSpaces[k];
 			//if the new space is the goal, compose the path back to startSpace
-			if (newSpace.x == goalSpace.x && newSpace.y == goalSpace.y) {
-				goalSpace.parent = currentSpace; //start the path with currentSpace and work our way back
-				return composePath(startSpace, goalSpace);
+			if (goalCondition(newSpace,goalSpace)) {
+				newSpace.parent = currentSpace; //start the path with currentSpace and work our way back
+				return composePath(startSpace, newSpace);
 			}
 			
 			//add newSpace to the openSet if it isn't in the closedSet or if the new start distance is lower
@@ -295,7 +296,7 @@ function calculatePath(terrain,startSpace,goalSpace) {
 				if ((!inOpenSet) || newSpace.startDistance > newStartDistance) { 
 					newSpace.parent = currentSpace;
 					newSpace.startDistance = newStartDistance;
-					newSpace.totalCost = newSpace.startDistance + calculateHeuristics(newSpace,goalSpace);
+					newSpace.totalCost = newSpace.startDistance + (useHeuristics ? calculateHeuristics(newSpace,goalSpace) : 0);
 					//remove newSpace from openSet, then add it back via binary search to ensure that its position in the open set is up to date
 					if (inOpenSet) {
 						openSet.splice(openSetIndex,1);
