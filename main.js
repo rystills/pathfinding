@@ -72,22 +72,23 @@ function calculatePathWaypoints(terrain,waypoints,startSpace,goalSpace) {
 	}
 	
 	//grab the nearest waypoint to both the start space and the goal space
-	startWaypoint = calculatePath(scripts[activeMap.name].map, startSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
+	startWaypoint = calculatePath(terrain, startSpace, waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
 	var startClosedSet = closedSet;
 	var startPath = path;
 	
-	goalWaypoint = calculatePath(scripts[activeMap.name].map, goalSpace, scripts[activeMap.name].waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
+	goalWaypoint = calculatePath(terrain, goalSpace, waypoints, containerIsWaypoint, adjacentContainers, containerWalkable, false).last();
 	
 	console.log(startWaypoint);
 	//preserve the state of the closedSet and path so we can combine it all at the end for visual display of pathfinding process
 	var waypointsClosedSet = closedSet.concat(startClosedSet);
 	var waypointsPath = path.concat(startPath);
 	
-	var finalPath = calculatePath(scripts[activeMap.name].waypoints, startWaypoint, goalWaypoint, compareCoords, adjacentWaypoints, function() {return true}, true);
+	var finalPath = calculatePath(waypoints, startWaypoint, goalWaypoint, compareCoords, adjacentWaypoints, function() {return true}, true);
 	
 	//finally, concatenate the closedSet and path once more so we retain the nodes explored during waypoint discovery
 	closedSet = closedSet.concat(waypointsClosedSet);
-	path = path.concat(waypointsPath);
+	finalPath = finalPath.concat(waypointsPath);
+	
 	return finalPath;
 }
 
@@ -546,17 +547,10 @@ function drawHUD() {
  */
 function drawPath() {
 	//first draw the closedSet
-	//ctx.fillStyle = "rgba(255,255,255," + (activeMode == modes.tile ? ".5)" : "1)");
 	ctx.fillStyle = "rgba(255,255,255,1)";
 	for (var i = 0; i < closedSet.length; ++i) {
 		ctx.fillRect(closedSet[i].x*tileSize-scrollX+1,closedSet[i].y*tileSize-scrollY+1,tileSize*containerSize-2,tileSize*containerSize-2);
 	}
-	//next draw the openSet
-//	ctx.fillStyle = "rgba(255,255,255,.5)";
-//	for (var i = 0; i < openSet.length; ++i) {
-//		ctx.fillRect(openSet[i].x*tileSize-scrollX+1,openSet[i].y*tileSize-scrollY	+1,tileSize*containerSize-2,tileSize*containerSize-2);
-//	}
-//	ctx.closePath();
 	
 	//now draw the final path
 	ctx.fillStyle = "rgba(0,0,255,1)";
