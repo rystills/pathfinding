@@ -7,7 +7,7 @@ Controls:
 -Click and drag left mouse button to add blocks of the selected type at the mouse cursor  
 -Click and drag right mouse button to remove blocks at the mouse cursor  
   
-Play here: http://rystills.github.io/pathfinding/  
+Play here: https://rystills.github.io/pathfinding-demo/  
   
 To run locally, open index.html in a browser window  
   

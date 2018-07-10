@@ -930,7 +930,7 @@ function initGlobals() {
 	buttons.push(new Button(10,550,uicnv,"Clear Blocks",24,clearBlocks));
 	buttons.push(new Button(10,650,uicnv,"Linear Distance: 100%",24,changeHeuristicWeight,1));
 	buttons.push(new Button(10,710,uicnv,"Manhattan Distance: 100%",24,changeHeuristicWeight,2));
-	
+	buttons[buttons.length-1].text = "Manhattan Distance: 0%";
 	//object containing hashed block locations in form x,y
 	blocks = {};
 	
@@ -945,9 +945,9 @@ function initGlobals() {
 	openSet = [];
 	path = [];
 	
-	//store heuristic rates, to be modified by the user if desired
+	//store heuristic rates, to be modified by the user if desired (>100% combined weight will cause faster pathfinding, but will not guarantee optimal paths)
 	heuristic1Weight = 1;
-	heuristic2Weight = 1;
+	heuristic2Weight = 0;
 }
 
 //disallow right-click context menu as right click functionality is necessary for block removal
